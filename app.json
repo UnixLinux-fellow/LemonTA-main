@@ -14,8 +14,7 @@
     "pages/knowledge/inspect/inspect",
     "pages/knowledge/move/move",
     "pages/knowledge/checklist/checklist",
-    "pages/knowledge/glbviewer/glbviewer",
-    "pages/knowledge/pd2d/pd2d"
+    "pages/knowledge/glbviewer/glbviewer"
   ],
   "subpackages": [
     {
