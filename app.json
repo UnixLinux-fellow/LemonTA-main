@@ -1,0 +1,80 @@
+{
+  "pages": [
+    "pages/home/home",
+    "pages/design/design",
+    "pages/knowledge/knowledge",
+    "pages/profile/profile",
+    "pages/knowledge/detail/detail",
+    "pages/profile/feedback/feedback",
+    "pages/profile/contact/contact",
+    "pages/profile/email/email",
+    "pages/profile/downloads/downloads",
+    "pages/knowledge/budget/budget",
+    "pages/knowledge/needs/needs",
+    "pages/knowledge/inspect/inspect",
+    "pages/knowledge/move/move",
+    "pages/knowledge/checklist/checklist",
+    "pages/knowledge/glbviewer/glbviewer"
+  ],
+  "subpackages": [
+    {
+      "root": "packageDesign",
+      "name": "design-flow",
+      "pages": [
+        "register/register",
+        "preset/preset",
+        "layout/layout",
+        "cost/cost"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/design/design": {
+      "network": "all",
+      "packages": ["design-flow"]
+    }
+  },
+  "window": {
+    "navigationBarTitleText": "柠檬塔定制系统",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f5f5f5",
+    "backgroundTextStyle": "dark",
+    "navigationStyle": "custom"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#FC9700",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "assets/icons/home.png",
+        "selectedIconPath": "assets/icons/home-active.png"
+      },
+      {
+        "pagePath": "pages/design/design",
+        "text": "设计",
+        "iconPath": "assets/icons/design.png",
+        "selectedIconPath": "assets/icons/design-active.png"
+      },
+      {
+        "pagePath": "pages/knowledge/knowledge",
+        "text": "知识库",
+        "iconPath": "assets/icons/knowledge.png",
+        "selectedIconPath": "assets/icons/knowledge-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "assets/icons/profile.png",
+        "selectedIconPath": "assets/icons/profile-active.png"
+      }
+    ]
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

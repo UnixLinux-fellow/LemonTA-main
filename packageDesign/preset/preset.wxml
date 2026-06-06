@@ -1,0 +1,54 @@
+<!--pages/design/preset/preset.wxml-->
+<wxs src="../../utils/assets.wxs" module="assets" />
+<view class="container">
+  <image class="bg-image bg-image-light" src="{{assets.bg('T3')}}" mode="aspectFill" lazy-load />
+  
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="onCancel">
+        <text class="back-arrow">‹</text>
+      </view>
+      <text class="nav-title">新建设计</text>
+    </view>
+  </view>
+  
+  <view class="preset-content" style="padding-top: {{statusBarHeight + navBarHeight + 20}}px;">
+    <view class="preset-card">
+      <view class="card-title">新设计的名字是？</view>
+      <input class="name-input"
+             placeholder="例如 主卧衣柜"
+             placeholder-class="name-input-ph"
+             value="{{designName}}"
+             bindinput="onNameInput" />
+      
+      <view class="card-title" style="margin-top: 60rpx;">是否有转角柜？</view>
+      <view class="corner-options">
+        <view class="corner-btn {{cornerType === 'ZZJ' ? 'active' : ''}}" bindtap="setCorner" data-type="ZZJ">左转角</view>
+        <view class="corner-btn {{cornerType === 'YZJ' ? 'active' : ''}}" bindtap="setCorner" data-type="YZJ">右转角</view>
+        <view class="corner-btn {{cornerType === 'ZYZJ' ? 'active' : ''}}" bindtap="setCorner" data-type="ZYZJ">双侧</view>
+        <view class="corner-btn {{cornerType === 'WZJ' ? 'active' : ''}}" bindtap="setCorner" data-type="WZJ">无</view>
+      </view>
+      <view class="corner-hint" wx:if="{{cornerHint}}">{{cornerHint}}</view>
+      
+      <view class="size-row">
+        <text class="size-label">墙面宽度</text>
+        <input class="size-input" type="number" placeholder="输入宽度" placeholder-class="size-input-ph" value="{{wallWidth}}" bindinput="onWidthInput" />
+        <text class="size-unit">cm</text>
+      </view>
+      
+      <view class="size-row">
+        <text class="size-label">墙面高度</text>
+        <input class="size-input" type="number" placeholder="输入高度" placeholder-class="size-input-ph" value="{{wallHeight}}" bindinput="onHeightInput" />
+        <text class="size-unit">cm</text>
+      </view>
+      
+      <view class="error-msg" wx:if="{{errorMsg}}">{{errorMsg}}</view>
+      
+      <view class="preset-btns">
+        <view class="btn-cancel" bindtap="onCancel">取消</view>
+        <view class="btn-ok" bindtap="onConfirm">确认</view>
+      </view>
+    </view>
+  </view>
+</view>

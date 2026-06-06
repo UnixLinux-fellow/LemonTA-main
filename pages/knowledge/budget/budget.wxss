@@ -1,0 +1,438 @@
+/* pages/knowledge/budget/budget.wxss */
+
+.budget-scroll {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  padding: 0 30rpx;
+}
+
+/* ===== 输入区域 ===== */
+.input-section {
+  padding-top: 20rpx;
+}
+
+.input-card {
+  padding: 40rpx 36rpx;
+}
+
+.card-header {
+  text-align: center;
+  margin-bottom: 50rpx;
+}
+
+.card-title {
+  display: block;
+  font-size: 38rpx;
+  font-weight: bold;
+  color: #E85D5D;
+}
+
+.card-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 8rpx;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.input-label {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+  width: 180rpx;
+  flex-shrink: 0;
+}
+
+.input-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background: #f8f8f8;
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+}
+
+.budget-input {
+  flex: 1;
+  font-size: 32rpx;
+  color: #333;
+}
+
+.input-unit {
+  font-size: 28rpx;
+  color: #999;
+  margin-left: 10rpx;
+}
+
+.btn-calculate {
+  margin-top: 40rpx;
+  background: #FC9700;
+  border-radius: 50rpx;
+  padding: 24rpx;
+  text-align: center;
+}
+
+.btn-calculate-text {
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+/* ===== 结果区域 ===== */
+.result-section {
+  padding-top: 20rpx;
+}
+
+/* 总览卡片 */
+.summary-card {
+  padding: 36rpx;
+  margin-bottom: 24rpx;
+}
+
+.summary-header {
+  text-align: center;
+  margin-bottom: 30rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 2rpx solid #4ECDC4;
+}
+
+.summary-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #E85D5D;
+}
+
+.summary-info {
+  display: flex;
+  justify-content: space-around;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summary-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 8rpx;
+}
+
+.summary-value {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 饼图卡片 */
+.pie-card {
+  padding: 36rpx;
+  margin-bottom: 24rpx;
+}
+
+.pie-header {
+  text-align: center;
+  margin-bottom: 20rpx;
+}
+
+.pie-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.pie-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20rpx 0 30rpx;
+  position: relative;
+}
+
+.pie-chart {
+  width: 440rpx;
+  height: 440rpx;
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.pie-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 180rpx;
+  height: 180rpx;
+  margin-top: -90rpx;
+  margin-left: -90rpx;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.legend-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  width: 45%;
+}
+
+.legend-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 4rpx;
+  margin-right: 8rpx;
+  flex-shrink: 0;
+}
+
+.legend-text {
+  font-size: 22rpx;
+  color: #666;
+}
+
+/* 分配明细 */
+.allocation-card {
+  padding: 36rpx 0;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+}
+
+.allocation-header {
+  text-align: center;
+  margin-bottom: 24rpx;
+  padding: 0 36rpx;
+}
+
+.allocation-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.table-header {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 36rpx;
+  background: #f8f8f8;
+  border-bottom: 1rpx solid #eee;
+}
+
+.th-name {
+  flex: 2;
+  font-size: 24rpx;
+  color: #999;
+  font-weight: bold;
+}
+
+.th-ratio {
+  flex: 1;
+  font-size: 24rpx;
+  color: #999;
+  text-align: center;
+  font-weight: bold;
+}
+
+.th-cost {
+  flex: 1.2;
+  font-size: 24rpx;
+  color: #999;
+  text-align: right;
+  font-weight: bold;
+}
+
+/* 分类行 */
+.category-block {
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 36rpx 24rpx 0;
+  transition: background 0.2s;
+}
+
+.category-row.expanded {
+  background: #fafafa;
+}
+
+.cat-color-bar {
+  width: 8rpx;
+  height: 60rpx;
+  border-radius: 4rpx;
+  margin-right: 20rpx;
+  margin-left: 36rpx;
+  flex-shrink: 0;
+}
+
+.cat-name {
+  flex: 2;
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.cat-ratio {
+  flex: 1;
+  font-size: 28rpx;
+  color: #666;
+  text-align: center;
+}
+
+.cat-cost {
+  flex: 1.2;
+  font-size: 28rpx;
+  color: #E85D5D;
+  font-weight: bold;
+  text-align: right;
+}
+
+.cat-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+  margin-left: 16rpx;
+  transition: transform 0.3s;
+  transform: rotate(0deg);
+}
+
+.cat-arrow.arrow-up {
+  transform: rotate(90deg);
+}
+
+/* 展开详情 */
+.detail-panel {
+  background: #fafafa;
+  padding: 0 36rpx 20rpx;
+}
+
+.detail-header-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid #eee;
+  margin-bottom: 8rpx;
+}
+
+.dh-name {
+  flex: 2;
+  font-size: 22rpx;
+  color: #bbb;
+}
+
+.dh-ratio {
+  flex: 1;
+  font-size: 22rpx;
+  color: #bbb;
+  text-align: center;
+}
+
+.dh-cost {
+  flex: 1;
+  font-size: 22rpx;
+  color: #bbb;
+  text-align: center;
+}
+
+.dh-ref {
+  flex: 1.5;
+  font-size: 22rpx;
+  color: #bbb;
+  text-align: right;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  padding: 14rpx 0;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.detail-name {
+  flex: 2;
+  font-size: 26rpx;
+  color: #555;
+}
+
+.detail-ratio {
+  flex: 1;
+  font-size: 24rpx;
+  color: #999;
+  text-align: center;
+}
+
+.detail-cost {
+  flex: 1;
+  font-size: 26rpx;
+  color: #E85D5D;
+  text-align: center;
+}
+
+.detail-ref {
+  flex: 1.5;
+  font-size: 22rpx;
+  color: #999;
+  text-align: right;
+}
+
+/* Tips */
+.tips-box {
+  margin-top: 16rpx;
+  padding: 20rpx;
+  background: rgba(252, 151, 0, 0.06);
+  border-radius: 12rpx;
+  border-left: 6rpx solid #FC9700;
+}
+
+.tips-label {
+  display: block;
+  font-size: 24rpx;
+  font-weight: bold;
+  color: #FC9700;
+  margin-bottom: 8rpx;
+}
+
+.tips-content {
+  font-size: 22rpx;
+  color: #888;
+  line-height: 1.8;
+}
+
+/* 重新输入 */
+.reset-section {
+  padding: 40rpx 0;
+}
+
+.btn-reset {
+  background: #fff;
+  border: 2rpx solid #FC9700;
+  border-radius: 50rpx;
+  padding: 24rpx;
+  text-align: center;
+}
+
+.btn-reset-text {
+  color: #FC9700;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.bottom-spacer {
+  height: 120rpx;
+}

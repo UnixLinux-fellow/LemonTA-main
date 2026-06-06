@@ -1,0 +1,169 @@
+<!--pages/knowledge/budget/budget.wxml-->
+<wxs module="fmt">
+module.exports = {
+  money: function(num) {
+    if (num >= 10000) {
+      return (num / 10000).toFixed(2) + '万';
+    }
+    if (num >= 1000) {
+      var s = num.toString();
+      var result = '';
+      var count = 0;
+      for (var i = s.length - 1; i >= 0; i--) {
+        count++;
+        result = s[i] + result;
+        if (count % 3 === 0 && i !== 0) {
+          result = ',' + result;
+        }
+      }
+      return result;
+    }
+    return num + '';
+  }
+}
+</wxs>
+<wxs src="../../../utils/assets.wxs" module="assets" />
+<view class="container">
+  <image class="bg-image bg-image-medium" src="{{assets.bg('T2')}}" mode="aspectFill" lazy-load />
+
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="nav-back-icon">‹</text>
+      </view>
+      <text class="nav-title">柠檬塔快速预算</text>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="budget-scroll" style="padding-top: {{statusBarHeight + navBarHeight + 10}}px;">
+    <!-- 输入区域 -->
+    <view class="input-section" wx:if="{{showInput}}">
+      <view class="input-card section-card">
+        <view class="card-header">
+          <text class="card-title">装修预算自动测算表</text>
+          <text class="card-desc">含超全项目分项+全套参考价格</text>
+        </view>
+
+        <view class="input-row">
+          <text class="input-label">装修总预算</text>
+          <view class="input-wrap">
+            <input class="budget-input" type="digit" placeholder="请输入总预算"
+              value="{{totalBudget}}" bindinput="onInputBudget" />
+            <text class="input-unit">元</text>
+          </view>
+        </view>
+
+        <view class="input-row">
+          <text class="input-label">套内面积</text>
+          <view class="input-wrap">
+            <input class="budget-input" type="digit" placeholder="请输入套内面积"
+              value="{{area}}" bindinput="onInputArea" />
+            <text class="input-unit">m²</text>
+          </view>
+        </view>
+
+        <view class="btn-calculate" bindtap="onCalculate">
+          <text class="btn-calculate-text">开始测算</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 结果区域 -->
+    <view class="result-section" wx:if="{{showResult}}">
+      <!-- 总览卡片 -->
+      <view class="summary-card section-card">
+        <view class="summary-header">
+          <text class="summary-title">装修预算总览</text>
+        </view>
+        <view class="summary-info">
+          <view class="summary-item">
+            <text class="summary-label">总预算</text>
+            <text class="summary-value text-primary">{{fmt.money(totalBudget)}}元</text>
+          </view>
+          <view class="summary-item">
+            <text class="summary-label">套内面积</text>
+            <text class="summary-value">{{area}}m²</text>
+          </view>
+          <view class="summary-item">
+            <text class="summary-label">每平方预算</text>
+            <text class="summary-value text-primary">{{budgetPerSqm}}元/m²</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 饼图（CSS conic-gradient 绘制，避免 canvas 同层渲染导致的飘移） -->
+      <view class="pie-card section-card">
+        <view class="pie-header">
+          <text class="pie-title">预算分配表</text>
+        </view>
+        <view class="pie-container">
+          <view class="pie-chart" style="background: conic-gradient({{pieGradient}});">
+            <view class="pie-hole"></view>
+          </view>
+        </view>
+        <!-- 图例 -->
+        <view class="legend-grid">
+          <view class="legend-item" wx:for="{{pieData}}" wx:key="name">
+            <view class="legend-dot" style="background: {{item.color}};"></view>
+            <text class="legend-text">{{item.name}} {{item.percent}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 整体分配列表 -->
+      <view class="allocation-card section-card">
+        <view class="allocation-header">
+          <text class="allocation-title">整体分配明细</text>
+        </view>
+        <!-- 表头 -->
+        <view class="table-header">
+          <text class="th-name">预算项目</text>
+          <text class="th-ratio">费用占比</text>
+          <text class="th-cost">费用(元)</text>
+        </view>
+        <!-- 分类列表 -->
+        <view wx:for="{{categories}}" wx:key="name" class="category-block">
+          <view class="category-row {{expandedIndex === index ? 'expanded' : ''}}"
+                bindtap="toggleCategory" data-index="{{index}}">
+            <view class="cat-color-bar" style="background: {{item.color}};"></view>
+            <text class="cat-name">{{item.name}}</text>
+            <text class="cat-ratio">{{item.ratio}}</text>
+            <text class="cat-cost">{{fmt.money(item.cost)}}</text>
+            <text class="cat-arrow {{expandedIndex === index ? 'arrow-up' : ''}}">›</text>
+          </view>
+          <!-- 展开明细 -->
+          <view class="detail-panel" wx:if="{{expandedIndex === index && item.items.length > 0}}">
+            <!-- 子项表头 -->
+            <view class="detail-header-row">
+              <text class="dh-name">子项目</text>
+              <text class="dh-ratio">占比</text>
+              <text class="dh-cost">费用</text>
+              <text class="dh-ref">参考单价</text>
+            </view>
+            <view class="detail-row" wx:for="{{item.items}}" wx:for-item="sub" wx:key="name">
+              <text class="detail-name">{{sub.name}}</text>
+              <text class="detail-ratio">{{sub.ratio}}</text>
+              <text class="detail-cost">{{fmt.money(sub.cost)}}</text>
+              <text class="detail-ref">{{sub.ref}}{{sub.unit}}</text>
+            </view>
+            <!-- Tips -->
+            <view class="tips-box" wx:if="{{item.tips}}">
+              <text class="tips-label">💡 Tips</text>
+              <text class="tips-content">{{item.tips}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 重新输入按钮 -->
+      <view class="reset-section">
+        <view class="btn-reset" bindtap="onResetInput">
+          <text class="btn-reset-text">重新输入预算和面积</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="bottom-spacer"></view>
+  </scroll-view>
+</view>

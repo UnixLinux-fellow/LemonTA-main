@@ -1,0 +1,32 @@
+/**
+ * 图片资源路径 WXS 模块
+ * 在 WXML 中使用: <wxs src="../../utils/assets.wxs" module="assets" />
+ * 然后: src="{{assets.bg('T1')}}"
+ */
+
+// 是否使用 CDN
+var USE_CDN = true;
+// CDN 基础 URL - 微信云开发云存储
+var CDN_BASE_URL = 'cloud://cloud1-5gbuna7d27dafeba.636c-cloud1-5gbuna7d27dafeba-1417087823/claw-assets';
+
+function getAssetPath(relativePath) {
+  if (USE_CDN && CDN_BASE_URL) {
+    return CDN_BASE_URL + '/' + relativePath;
+  }
+  return '/assets/' + relativePath;
+}
+
+module.exports = {
+  bg: function(name) {
+    return getAssetPath('bg/' + name + '.jpg');
+  },
+  picture: function(subPath) {
+    if (USE_CDN && CDN_BASE_URL) {
+      return CDN_BASE_URL + '/picture/' + subPath + '.png';
+    }
+    return '/packageDesign/picture/' + subPath + '.png';
+  },
+  icon: function(name) {
+    return '/assets/icons/' + name + '.png';
+  }
+};

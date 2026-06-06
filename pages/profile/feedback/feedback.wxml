@@ -1,0 +1,35 @@
+<!--pages/profile/feedback/feedback.wxml-->
+<view class="container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="back-arrow">‹</text>
+      </view>
+      <text class="nav-title">意见反馈</text>
+    </view>
+  </view>
+  
+  <view class="feedback-content" style="padding-top: {{statusBarHeight + navBarHeight + 10}}px;">
+    <view class="feedback-card">
+      <text class="feedback-label">反馈内容</text>
+      <textarea class="feedback-input" 
+                placeholder="请输入您的意见或建议..." 
+                value="{{content}}" 
+                bindinput="onInput"
+                maxlength="500" />
+      <!-- 图片上传 -->
+      <view class="upload-area" bindtap="chooseImage">
+        <view class="upload-placeholder" wx:if="{{!image}}">
+          <text class="upload-icon">⊞</text>
+        </view>
+        <image wx:if="{{image}}" class="upload-preview" src="{{image}}" mode="aspectFill" lazy-load />
+      </view>
+      <!-- 按钮行 -->
+      <view class="feedback-btns">
+        <view class="btn-cancel" bindtap="goBack">取消</view>
+        <view class="btn-confirm" bindtap="onSubmit">确认</view>
+      </view>
+    </view>
+  </view>
+</view>

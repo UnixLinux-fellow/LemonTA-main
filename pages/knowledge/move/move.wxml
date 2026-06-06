@@ -1,0 +1,125 @@
+<!--pages/knowledge/move/move.wxml-->
+<wxs src="../../../utils/assets.wxs" module="assets" />
+<wxs module="tools">
+  module.exports.checkedCount = function(checkStates, stepNum, total) {
+    var count = 0;
+    for (var i = 1; i <= total; i++) {
+      if (checkStates['step' + stepNum + '_' + i]) {
+        count++;
+      }
+    }
+    return count;
+  }
+</wxs>
+<view class="container">
+  <image class="bg-image" src="{{assets.bg('T2')}}" mode="aspectFill" lazy-load />
+
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="nav-back-icon">←</text>
+      </view>
+      <text class="nav-title">{{currentStep >= 0 ? currentData.title : '搬家核对清单'}}</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <view class="page-content" style="padding-top: {{statusBarHeight + navBarHeight + 10}}px;">
+
+    <!-- ========== 步骤选择页 ========== -->
+    <view class="step-select" wx:if="{{currentStep < 0}}">
+      <view class="step-header">
+        <text class="step-header-title">搬家核对清单</text>
+        <text class="step-header-desc">从搬家前准备到新家入住，逐项核对，零遗漏</text>
+      </view>
+
+      <view class="step-list">
+        <view class="step-card"
+              wx:for="{{steps}}"
+              wx:key="step"
+              bindtap="selectStep"
+              data-index="{{index}}">
+          <view class="step-card-left">
+            <text class="step-card-icon">{{item.icon}}</text>
+            <view class="step-card-info">
+              <text class="step-card-label">STEP{{item.step}}</text>
+              <text class="step-card-title">{{item.title}}</text>
+            </view>
+          </view>
+          <view class="step-card-right">
+            <view class="step-progress">
+              <text class="step-progress-text">{{tools.checkedCount(checkStates, item.step, item.count)}}/{{item.count}}</text>
+              <view class="step-progress-bar">
+                <view class="step-progress-fill" style="width: {{item.count > 0 ? (tools.checkedCount(checkStates, item.step, item.count) / item.count * 100) : 0}}%;"></view>
+              </view>
+            </view>
+            <text class="step-card-arrow">›</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ========== 验收清单详情页 ========== -->
+    <view class="inspect-detail" wx:if="{{currentStep >= 0 && currentData}}">
+      <!-- 顶部STEP信息 -->
+      <view class="detail-header">
+        <text class="detail-icon">{{currentData.icon}}</text>
+        <view class="detail-header-info">
+          <text class="detail-header-step">STEP{{currentData.step}}</text>
+          <text class="detail-header-title">{{currentData.title}}</text>
+        </view>
+        <view class="detail-header-progress">
+          <text class="detail-progress-num">{{tools.checkedCount(checkStates, currentData.step, currentData.items.length)}}</text>
+          <text class="detail-progress-total">/{{currentData.items.length}}</text>
+        </view>
+      </view>
+
+      <!-- 验收项列表 -->
+      <view class="check-list">
+        <view class="check-item {{checkStates['step' + currentData.step + '_' + item.id] ? 'check-item-done' : ''}}"
+              wx:for="{{currentData.items}}"
+              wx:key="id"
+              bindtap="toggleCheck"
+              data-step="{{currentData.step}}"
+              data-id="{{item.id}}">
+          <view class="check-left">
+            <view class="check-box {{checkStates['step' + currentData.step + '_' + item.id] ? 'check-box-checked' : ''}}">
+              <text wx:if="{{checkStates['step' + currentData.step + '_' + item.id]}}">✓</text>
+            </view>
+            <text class="check-num">{{item.id}}</text>
+          </view>
+          <view class="check-right">
+            <text class="check-desc {{checkStates['step' + currentData.step + '_' + item.id] ? 'check-desc-done' : ''}}">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 备注区域 -->
+      <view class="notes-section" wx:if="{{currentData.notes}}">
+        <view class="notes-header">
+          <text class="notes-icon">📝</text>
+          <text class="notes-title">备注</text>
+        </view>
+        <text class="notes-content">{{currentData.notes}}</text>
+      </view>
+
+      <!-- 合同提示 -->
+      <view class="contract-section" wx:if="{{currentData.contract}}">
+        <text class="contract-text">{{currentData.contract}}</text>
+      </view>
+
+      <!-- 底部操作 -->
+      <view class="detail-actions">
+        <view class="action-reset" bindtap="resetCurrentStep">
+          <text>重置本项</text>
+        </view>
+        <view class="action-back" bindtap="goBack">
+          <text>返回选择</text>
+        </view>
+      </view>
+
+      <view class="bottom-space"></view>
+    </view>
+  </view>
+</view>

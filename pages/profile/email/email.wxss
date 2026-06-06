@@ -1,0 +1,20 @@
+/* pages/profile/email/email.wxss */
+
+.container { min-height: 100vh; background: #f8f8f8; }
+
+/* 导航栏覆盖：白色背景 */
+.custom-nav {
+  background: #fff;
+}
+
+.nav-title {
+  font-size: 32rpx;
+}
+
+.email-content { padding: 20rpx 30rpx; }
+.email-card { background: #fff; border-radius: 20rpx; padding: 40rpx; }
+.email-label { font-size: 26rpx; color: #999; display: block; margin-bottom: 10rpx; }
+.email-current { font-size: 32rpx; color: #333; font-weight: 500; display: block; }
+.email-input { border-bottom: 2rpx solid #e0e0e0; padding: 16rpx 0; font-size: 30rpx; color: #333; }
+.email-error { color: #e74c3c; font-size: 24rpx; margin-top: 10rpx; display: block; }
+.btn-save { background: #FC9700; color: #fff; border-radius: 50rpx; padding: 20rpx 0; font-size: 30rpx; font-weight: bold; border: none; margin-top: 50rpx; }

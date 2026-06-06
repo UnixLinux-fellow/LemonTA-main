@@ -1,0 +1,260 @@
+/* pages/knowledge/needs/needs.wxss */
+
+.container {
+  min-height: 100vh;
+  position: relative;
+  background: #faf8f5;
+}
+
+.bg-image {
+  opacity: 0.3;
+}
+
+/* 导航栏覆盖 */
+.custom-nav {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.nav-bar {
+  justify-content: space-between;
+  padding: 0 30rpx;
+}
+
+.nav-back {
+  position: static;
+}
+
+.nav-title {
+  font-size: 32rpx;
+}
+
+/* 表单内容 */
+.form-content {
+  position: relative;
+  z-index: 1;
+  padding: 20rpx 30rpx 120rpx;
+}
+
+/* 顶部介绍卡片 */
+.intro-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24rpx;
+  padding: 48rpx 36rpx;
+  margin-bottom: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
+  border: 2rpx solid rgba(252, 151, 0, 0.2);
+}
+
+.intro-icon {
+  font-size: 64rpx;
+  margin-bottom: 16rpx;
+}
+
+.intro-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin-bottom: 20rpx;
+}
+
+.intro-desc {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.8;
+  text-align: center;
+}
+
+/* 保存状态 */
+.save-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 0;
+  margin-bottom: 16rpx;
+  gap: 8rpx;
+}
+
+.save-dot {
+  font-size: 18rpx;
+  color: #52c41a;
+}
+
+.save-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* STEP 分区 */
+.step-section {
+  margin-bottom: 28rpx;
+}
+
+.step-header {
+  background: linear-gradient(135deg, #FC9700, #FFB84D);
+  border-radius: 20rpx 20rpx 0 0;
+  padding: 28rpx 32rpx;
+}
+
+.step-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.step-body {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 0 0 20rpx 20rpx;
+  padding: 20rpx 28rpx 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+/* 问题条目 */
+.question-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.06);
+}
+
+.question-item:last-child {
+  border-bottom: none;
+}
+
+.q-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  margin-bottom: 16rpx;
+  line-height: 1.6;
+}
+
+/* 选项按钮 */
+.q-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
+}
+
+.option-btn {
+  background: #f5f5f5;
+  border: 2rpx solid #e8e8e8;
+  border-radius: 32rpx;
+  padding: 12rpx 32rpx;
+  font-size: 26rpx;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.option-btn text {
+  font-size: 26rpx;
+}
+
+.option-active {
+  background: rgba(252, 151, 0, 0.12);
+  border-color: #FC9700;
+  color: #FC9700;
+  font-weight: 600;
+}
+
+/* 输入框 */
+.q-input {
+  width: 100%;
+  height: 72rpx;
+  background: #f8f8f8;
+  border: 2rpx solid #e8e8e8;
+  border-radius: 12rpx;
+  padding: 0 24rpx;
+  font-size: 26rpx;
+  color: #333;
+  box-sizing: border-box;
+}
+
+.q-input:focus,
+.q-input:active {
+  border-color: #FC9700;
+  background: #fff;
+}
+
+/* 多行文本 */
+.q-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  background: #f8f8f8;
+  border: 2rpx solid #e8e8e8;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+  font-size: 26rpx;
+  color: #333;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+/* 备注输入 */
+.q-remark {
+  margin-top: 12rpx;
+}
+
+.remark-input {
+  width: 100%;
+  height: 64rpx;
+  background: #fafafa;
+  border: 1rpx dashed #d9d9d9;
+  border-radius: 10rpx;
+  padding: 0 24rpx;
+  font-size: 24rpx;
+  color: #999;
+  box-sizing: border-box;
+}
+
+/* 底部操作 */
+.bottom-actions {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+  padding-bottom: 80rpx;
+}
+
+.btn-save {
+  width: 100%;
+  background: linear-gradient(135deg, #FC9700, #FFB84D);
+  border-radius: 50rpx;
+  padding: 28rpx 0;
+  text-align: center;
+  box-shadow: 0 8rpx 24rpx rgba(252, 151, 0, 0.3);
+}
+
+.btn-save text {
+  font-size: 30rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.btn-reset {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2rpx solid #e0e0e0;
+  border-radius: 50rpx;
+  padding: 24rpx 0;
+  text-align: center;
+}
+
+.btn-reset text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.tip-text {
+  margin-top: 8rpx;
+}
+
+.tip-text text {
+  font-size: 24rpx;
+  color: #bbb;
+}

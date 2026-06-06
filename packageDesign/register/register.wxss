@@ -1,0 +1,144 @@
+/* pages/design/register/register.wxss */
+
+.container {
+  min-height: 100vh;
+  position: relative;
+}
+
+.register-content {
+  position: relative;
+  z-index: 1;
+  padding: 30rpx 60rpx 40rpx;
+}
+
+.register-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 40rpx;
+}
+
+.reg-title {
+  font-size: 52rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+.register-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.8;
+  margin-bottom: 80rpx;
+  border-top: 2rpx solid #e8e8e8;
+  padding-top: 30rpx;
+}
+
+.register-info .bold {
+  font-weight: bold;
+  color: #333;
+}
+
+.reg-logo-icon {
+  width: 60rpx;
+  height: 60rpx;
+  margin-top: 20rpx;
+}
+
+.btn-phone {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2rpx solid #e0e0e0;
+  border-radius: 50rpx;
+  padding: 28rpx 0;
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #FC9700;
+  width: 100%;
+}
+
+/* 演示模式提示 */
+.demo-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 40rpx;
+}
+
+.demo-tip-text {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 10rpx;
+}
+
+.demo-btn {
+  font-size: 28rpx;
+  color: #FC9700;
+  font-weight: bold;
+  padding: 16rpx 40rpx;
+  border: 2rpx solid #FC9700;
+  border-radius: 40rpx;
+}
+
+/* 邮箱填写卡片 */
+.email-card {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 24rpx;
+  padding: 50rpx 40rpx;
+  box-shadow: 0 8rpx 40rpx rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 200rpx;
+}
+
+.email-title {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 6rpx;
+}
+
+.email-subtitle {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 6rpx;
+}
+
+.email-subtitle .bold {
+  font-weight: bold;
+}
+
+.email-hint {
+  font-size: 24rpx;
+  color: #666;
+  text-align: center;
+}
+
+.email-input {
+  width: 100%;
+  border-bottom: 2rpx solid #e0e0e0;
+  padding: 20rpx 0;
+  font-size: 30rpx;
+  text-align: center;
+  margin: 30rpx 0 10rpx;
+}
+
+.email-tip {
+  font-size: 22rpx;
+  color: #999;
+  margin-bottom: 30rpx;
+}
+
+.email-error {
+  color: #e74c3c;
+  font-size: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.btn-confirm {
+  background: transparent;
+  border: none;
+  font-size: 34rpx;
+  font-weight: bold;
+  color: #FC9700;
+  padding: 20rpx 60rpx;
+}

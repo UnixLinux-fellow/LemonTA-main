@@ -1,0 +1,443 @@
+<!--pages/knowledge/glbviewer/glbviewer.wxml-->
+<view class="page">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="nav-back-icon">‹</text>
+      </view>
+      <text class="nav-title">GLB 模型预览</text>
+      <view class="nav-clear" wx:if="{{glbUrl && loadStage === 'done'}}" bindtap="clearModel">
+        <text class="nav-clear-text">清除</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 3D 视口 -->
+  <view class="viewport" style="top: {{statusBarHeight + navBarHeight}}px;" wx:if="{{mode === 'glb'}}">
+    <canvas type="webgl" id="glbCanvas" class="glb-canvas"
+            wx:if="{{loadStage === 'parsing' || loadStage === 'done'}}"
+            bindtouchstart="onGLBTouch"
+            bindtouchmove="onGLBTouch"
+            bindtouchend="onGLBTouch">
+    </canvas>
+
+    <!-- 空状态 -->
+    <view class="center-overlay" wx:if="{{loadStage === 'idle'}}">
+      <view class="center-icon-wrap">
+        <text class="center-icon">📦</text>
+      </view>
+      <text class="center-title">GLB 模型预览</text>
+      <text class="center-desc">支持 .glb / .gltf 格式的三维模型文件</text>
+      <!-- 柜子3D模型快捷入口 -->
+      <view class="cabinet-presets" wx:if="{{modelList.length > 0}}">
+        <text class="presets-title">柜子 3D 模型</text>
+        <scroll-view class="presets-scroll" scroll-x="true" enhanced="{{true}}" show-scrollbar="{{false}}">
+          <view class="preset-item" wx:for="{{modelList}}" wx:key="name" bindtap="loadCabinetModel" data-url="{{item.url}}" data-name="{{item.name}}">
+            <text class="preset-icon">🧊</text>
+            <text class="preset-label">{{item.label}}</text>
+          </view>
+        </scroll-view>
+      </view>
+      <view class="center-actions">
+        <view class="cta-btn" bindtap="chooseFile">
+          <text class="cta-btn-text">选择 GLB 文件</text>
+        </view>
+        <view class="cta-btn cta-btn-outline" bindtap="toggleUrlInput">
+          <text class="cta-btn-text outline-text">输入模型 URL</text>
+        </view>
+        <view class="cta-btn cta-btn-photo" bindtap="startSpaceMode">
+          <text class="cta-btn-text photo-text">📷 拍照解析空间</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 错误状态 -->
+    <view class="center-overlay" wx:if="{{loadStage === 'error'}}">
+      <view class="center-icon-wrap error-icon-wrap">
+        <text class="center-icon">⚠️</text>
+      </view>
+      <text class="center-title">加载失败</text>
+      <text class="center-desc error-desc">{{errorMsg}}</text>
+      <view class="center-actions">
+        <view class="cta-btn" bindtap="chooseFile">
+          <text class="cta-btn-text">重新选择文件</text>
+        </view>
+        <view class="cta-btn cta-btn-outline" bindtap="toggleUrlInput">
+          <text class="cta-btn-text outline-text">输入 URL 重试</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 下载进度面板 -->
+    <view class="center-overlay" wx:if="{{loadStage === 'resolving' || loadStage === 'downloading'}}">
+      <!-- 阶段图标 -->
+      <view class="stage-icon-wrap">
+        <view class="stage-icon" wx:if="{{loadStage === 'resolving'}}">
+          <text class="stage-icon-text">🔗</text>
+        </view>
+        <view class="stage-icon" wx:if="{{loadStage === 'downloading'}}">
+          <text class="stage-icon-text">📥</text>
+        </view>
+        <view class="stage-icon" wx:if="{{loadStage === 'parsing'}}">
+          <text class="stage-icon-text">🔧</text>
+        </view>
+      </view>
+
+      <!-- 阶段文字 -->
+      <text class="stage-label" wx:if="{{loadStage === 'resolving'}}">正在解析下载链接...</text>
+      <text class="stage-label" wx:if="{{loadStage === 'downloading'}}">正在下载模型文件</text>
+      <text class="stage-label" wx:if="{{loadStage === 'parsing'}}">正在加载 3D 场景...</text>
+
+      <!-- 文件名 -->
+      <text class="stage-filename" wx:if="{{fileName}}">{{fileName}}</text>
+
+      <!-- 进度条（下载 & 解析阶段都显示） -->
+      <view class="progress-wrap" wx:if="{{loadStage !== 'resolving'}}">
+        <view class="progress-bar">
+          <view class="progress-fill" style="width: {{progressPercent}}%;"></view>
+        </view>
+        <text class="progress-text">{{progressPercent}}%</text>
+      </view>
+
+      <!-- 下载详情 -->
+      <view class="dl-detail" wx:if="{{loadStage === 'downloading'}}">
+        <text class="dl-detail-text" wx:if="{{downloadedSize && totalSize}}">
+          {{downloadedSize}} / {{totalSize}}
+        </text>
+        <text class="dl-detail-text" wx:elif="{{downloadedSize}}">
+          已下载 {{downloadedSize}}
+        </text>
+        <view class="dl-detail-row" wx:if="{{downloadSpeed}}">
+          <text class="dl-detail-text dl-speed">{{downloadSpeed}}</text>
+        </view>
+      </view>
+
+      <!-- 取消下载 -->
+      <view class="cancel-btn" wx:if="{{loadStage === 'downloading'}}" bindtap="cancelDownload">
+        <text class="cancel-btn-text">取消下载</text>
+      </view>
+    </view>
+
+  <!-- 底部缩放控制面板 -->
+  <view class="scale-panel" wx:if="{{loadStage === 'done'}}">
+    <view class="scale-tabs">
+      <view class="scale-tab {{scaleMode === 'uniform' ? 'scale-tab-active' : ''}}" bindtap="switchScaleMode" data-mode="uniform">
+        <text>等比缩放</text>
+      </view>
+      <view class="scale-tab {{scaleMode === 'axis' ? 'scale-tab-active' : ''}}" bindtap="switchScaleMode" data-mode="axis">
+        <text>轴向拉伸</text>
+      </view>
+    </view>
+
+    <view class="scale-sliders" wx:if="{{scaleMode === 'uniform'}}">
+      <view class="slider-row">
+        <text class="slider-label">缩放</text>
+        <slider class="scale-slider" min="30" max="300" step="1"
+                value="{{uniformScalePercent}}"
+                bindchange="onUniformScaleChange"
+                show-value="{{true}}"
+                activeColor="#FC9700"
+                backgroundColor="rgba(255,255,255,0.1)" />
+        <text class="slider-value">{{uniformScaleText}}</text>
+      </view>
+    </view>
+
+    <view class="scale-sliders" wx:if="{{scaleMode === 'axis'}}">
+      <view class="slider-row">
+        <text class="slider-label">X (宽)</text>
+        <slider class="scale-slider" min="{{axisMin.x}}" max="{{axisMax.x}}" step="1"
+                value="{{axisValue.x}}"
+                bindchange="onAxisScaleXChange"
+                show-value="{{true}}"
+                activeColor="#FC9700"
+                backgroundColor="rgba(255,255,255,0.1)" />
+        <text class="slider-value">{{axisDisplay.x}}cm</text>
+      </view>
+      <view class="slider-row">
+        <text class="slider-label">Y (高)</text>
+        <slider class="scale-slider" min="{{axisMin.y}}" max="{{axisMax.y}}" step="1"
+                value="{{axisValue.y}}"
+                bindchange="onAxisScaleYChange"
+                show-value="{{true}}"
+                activeColor="#FC9700"
+                backgroundColor="rgba(255,255,255,0.1)" />
+        <text class="slider-value">{{axisDisplay.y}}cm</text>
+      </view>
+      <view class="slider-row">
+        <text class="slider-label">Z (深)</text>
+        <slider class="scale-slider" min="{{axisMin.z}}" max="{{axisMax.z}}" step="1"
+                value="{{axisValue.z}}"
+                bindchange="onAxisScaleZChange"
+                show-value="{{true}}"
+                activeColor="#FC9700"
+                backgroundColor="rgba(255,255,255,0.1)" />
+        <text class="slider-value">{{axisDisplay.z}}cm</text>
+      </view>
+    </view>
+
+    <view class="scale-actions">
+      <view class="scale-action-btn scale-action-reset" bindtap="resetGLBScale">
+        <text>重置</text>
+      </view>
+      <view class="scale-action-btn scale-action-confirm" bindtap="confirmGLBSize">
+        <text>确认尺寸</text>
+      </view>
+    </view>
+  </view>
+  </view>
+
+  <!-- 空间解析模式（标记阶段） -->
+  <view class="space-mode" wx:if="{{mode === 'space' && spaceStage !== 'layout'}}" style="top: {{statusBarHeight + navBarHeight}}px;">
+    <!-- 标记提示 -->
+    <view class="marker-hint">
+      <text class="marker-hint-text">请标记墙角（地面左右 → 顶部左右）</text>
+    </view>
+
+    <!-- 照片区域 -->
+    <view class="photo-area">
+      <image class="photo-image"
+             wx:if="{{photoPath}}"
+             src="{{photoPath}}"
+             mode="aspectFit"
+             bindload="onPhotoLoad"
+             style="width: 100%; height: 100%;" />
+      <!-- 标记点叠加层 -->
+      <view class="markers-layer"
+            bindtap="onPhotoTap">
+        <view class="marker {{index === draggingIndex ? 'marker-dragging' : ''}}"
+              wx:for="{{markers}}"
+              wx:key="index"
+              style="left: {{item.x * 100}}%; top: {{item.y * 100}}%;"
+              data-index="{{index}}"
+              bindlongpress="onMarkerLongPress"
+              catchtouchmove="onMarkerDrag"
+              catchtouchend="onMarkerDragEnd">
+          <view class="marker-dot">●</view>
+          <text class="marker-label">{{index + 1}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 俯视轮廓预览 -->
+    <view class="topview-section">
+      <text class="section-label" wx:if="{{markers.length >= 3}}">俯视轮廓预览</text>
+      <text class="section-label" wx:else>请在照片上标记墙角（至少2个点）</text>
+      <canvas class="topview-canvas"
+              canvas-id="topviewCanvas"
+              wx:if="{{markers.length >= 3}}"
+              style="width: 320rpx; height: 240rpx;">
+      </canvas>
+    </view>
+
+    <!-- 转角类型（自动判断） -->
+    <view class="corner-display" wx:if="{{markers.length >= 3}}">
+      <text class="section-label">转角类型（自动判断）</text>
+      <view class="corner-tags">
+        <view class="corner-tag {{cornerType === 'none' ? 'corner-tag-active' : ''}}">无</view>
+        <view class="corner-tag {{cornerType === 'left' ? 'corner-tag-active' : ''}}">左</view>
+        <view class="corner-tag {{cornerType === 'right' ? 'corner-tag-active' : ''}}">右</view>
+        <view class="corner-tag {{cornerType === 'both' ? 'corner-tag-active' : ''}}">双侧</view>
+      </view>
+    </view>
+
+    <!-- 尺寸输入 -->
+    <view class="size-inputs" wx:if="{{markers.length >= 3}}">
+      <view class="size-row">
+        <text class="size-label">墙宽 (mm)</text>
+        <input class="size-input" type="digit" placeholder="80-10000" value="{{wallWidth}}" bindinput="onSpaceWidthInput" />
+      </view>
+      <view class="size-row">
+        <text class="size-label">墙高 (mm)</text>
+        <input class="size-input" type="digit" placeholder="1000-10000" value="{{wallHeight}}" bindinput="onSpaceHeightInput" />
+      </view>
+      <view class="size-row">
+        <text class="size-label">进深 (mm)</text>
+        <input class="size-input" type="digit" placeholder="150-1000" value="{{roomDepth}}" bindinput="onSpaceDepthInput" />
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="space-actions">
+      <view class="space-btn space-btn-reset" bindtap="resetMarkers" wx:if="{{markers.length > 0}}">
+        <text>清除标记</text>
+      </view>
+      <view class="space-btn space-btn-design" bindtap="confirmSpace" wx:if="{{markers.length >= 3}}">
+        <text>确认空间 →</text>
+      </view>
+    </view>
+    <view class="space-actions">
+      <view class="space-btn space-btn-outline" bindtap="reselectPhoto">
+        <text>重新选图</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 布局阶段：照片 + 柜子叠加 -->
+  <view class="layout-mode" wx:if="{{mode === 'space' && spaceStage === 'layout'}}" style="top: {{statusBarHeight + navBarHeight}}px;">
+    <!-- 全屏 Canvas 2D -->
+    <canvas type="2d" id="photoLayoutCanvas" class="photo-layout-canvas"
+            bindtap="onPhotoLayoutTap"
+            bindlongpress="onPhotoLayoutLongPress">
+    </canvas>
+
+    <!-- 顶部提示栏 -->
+    <view class="layout-top-bar">
+      <view class="layout-back-btn" bindtap="goBackToMarking">
+        <text>‹ 返回</text>
+      </view>
+      <text class="layout-hint" wx:if="{{selectedModuleIndex < 0}}">点击墙面添加柜子</text>
+      <text class="layout-hint layout-hint-selected" wx:else>
+        已选: {{layoutModules[selectedModuleIndex].width}}cm {{layoutModules[selectedModuleIndex].type.toUpperCase()}}型
+      </text>
+      <view class="layout-top-spacer"></view>
+    </view>
+
+    <!-- 底部控制面板 -->
+    <view class="layout-bottom-panel">
+      <!-- 宽度选择 -->
+      <view class="selector-row">
+        <text class="selector-label">宽度</text>
+        <view class="selector-tag {{selectedWidth === 50 && !isCustomModule ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectWidth" data-width="50">50</view>
+        <view class="selector-tag {{selectedWidth === 100 && !isCustomModule ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectWidth" data-width="100">100</view>
+        <view class="selector-tag {{isCustomModule ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectWidth" data-width="custom">非标</view>
+      </view>
+
+      <!-- 类型选择（柜子预览图） -->
+      <view class="module-preview-row">
+        <text class="selector-label">类型</text>
+        <scroll-view class="module-preview-scroll" scroll-x="true" enhanced="{{true}}" show-scrollbar="{{false}}">
+          <block wx:for="{{isCustomModule ? availableModulesCustom : availableModules}}" wx:key="type">
+            <view class="module-preview-item {{selectedType === item.type ? 'module-preview-active' : ''}}"
+                  bindtap="onSelectType" data-type="{{item.type}}">
+              <image class="module-preview-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+              <text class="module-preview-label">{{item.label}}</text>
+            </view>
+          </block>
+        </scroll-view>
+      </view>
+
+      <!-- 颜色选择 -->
+      <view class="selector-row">
+        <text class="selector-label">颜色</text>
+        <view class="selector-tag {{selectedColor === 'white' ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectColor" data-color="white">白</view>
+        <view class="selector-tag {{selectedColor === 'cream' ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectColor" data-color="cream">奶油</view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="layout-actions">
+        <view class="space-btn space-btn-outline" bindtap="goBackToMarking">
+          <text>返回标记</text>
+        </view>
+        <view class="space-btn space-btn-design" bindtap="goCost">
+          <text>保存并算价</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 3D 实景匹配模式 -->
+  <view class="space3d-container" wx:if="{{mode === 'space3d'}}" style="top: {{statusBarHeight + navBarHeight}}px;">
+    <canvas type="webgl" id="space3dCanvas" class="space3d-canvas"
+            bindtouchstart="onSpace3dTouch"
+            bindtouchmove="onSpace3dTouch"
+            bindtouchend="onSpace3dTouch">
+    </canvas>
+
+    <!-- 顶部栏 -->
+    <view class="space3d-top-bar">
+      <view class="layout-back-btn" bindtap="goBackToMarking">
+        <text>‹ 返回</text>
+      </view>
+      <text class="layout-hint" wx:if="{{selectedModuleIndex < 0}}">点击墙面添加柜子</text>
+      <text class="layout-hint layout-hint-selected" wx:else>
+        已选: {{layoutModules[selectedModuleIndex].width}}cm {{layoutModules[selectedModuleIndex].type.toUpperCase()}}型
+      </text>
+      <view class="space3d-camera-btn" bindtap="resetCamera3d">
+        <text>⟳ 重置视角</text>
+      </view>
+    </view>
+
+    <!-- 底部控制面板（复用 layout 选择器结构） -->
+    <view class="layout-bottom-panel">
+      <view class="selector-row">
+        <text class="selector-label">宽度</text>
+        <view class="selector-tag {{selectedWidth === 50 && !isCustomModule ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectWidth" data-width="50">50</view>
+        <view class="selector-tag {{selectedWidth === 100 && !isCustomModule ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectWidth" data-width="100">100</view>
+        <view class="selector-tag {{isCustomModule ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectWidth" data-width="custom">非标</view>
+      </view>
+
+      <view class="module-preview-row">
+        <text class="selector-label">类型</text>
+        <scroll-view class="module-preview-scroll" scroll-x="true" enhanced="{{true}}" show-scrollbar="{{false}}">
+          <block wx:for="{{isCustomModule ? availableModulesCustom : availableModules}}" wx:key="type">
+            <view class="module-preview-item {{selectedType === item.type ? 'module-preview-active' : ''}}"
+                  bindtap="onSelectType" data-type="{{item.type}}">
+              <image class="module-preview-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+              <text class="module-preview-label">{{item.label}}</text>
+            </view>
+          </block>
+        </scroll-view>
+      </view>
+
+      <view class="selector-row">
+        <text class="selector-label">颜色</text>
+        <view class="selector-tag {{selectedColor === 'white' ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectColor" data-color="white">白</view>
+        <view class="selector-tag {{selectedColor === 'cream' ? 'selector-tag-active' : ''}}"
+              bindtap="onSelectColor" data-color="cream">奶油</view>
+      </view>
+
+      <view class="next-module-row">
+        <view class="next-module-btn" bindtap="onNextModule">
+          <text>下一模块</text>
+        </view>
+      </view>
+
+      <view class="layout-actions">
+        <view class="space-btn space-btn-outline" bindtap="goBackToMarking">
+          <text>返回标记</text>
+        </view>
+        <view class="space-btn space-btn-design" bindtap="goCost">
+          <text>保存并算价</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 隐藏的纹理预处理 canvas（始终存在于 DOM） -->
+  <canvas type="2d" id="texturePrepCanvas"
+          style="position:fixed;left:-9999px;top:-9999px;width:512px;height:512px;">
+  </canvas>
+
+  <!-- URL 输入面板 -->
+  <view class="url-panel" wx:if="{{showUrlInput}}">
+    <view class="url-panel-mask" bindtap="toggleUrlInput"></view>
+    <view class="url-panel-content">
+      <text class="url-panel-title">输入 GLB 模型 URL</text>
+      <input class="url-input"
+             placeholder="https://example.com/model.glb"
+             value="{{inputUrl}}"
+             bindinput="onInputUrl"
+             confirm-type="done"
+             bindconfirm="confirmUrl"
+             focus="{{true}}" />
+      <view class="url-panel-btns">
+        <view class="url-btn url-btn-cancel" bindtap="toggleUrlInput">
+          <text>取消</text>
+        </view>
+        <view class="url-btn url-btn-confirm" bindtap="confirmUrl">
+          <text>加载</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

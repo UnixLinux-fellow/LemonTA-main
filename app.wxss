@@ -1,0 +1,339 @@
+/* ===============================================
+   全局样式 - iOS 风格设计系统 (Apple HIG 排版)
+   =============================================== */
+
+page {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'PingFang SC', 'HarmonyOS Sans SC', 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f5f5f7;
+  color: #1d1d1f;
+  font-size: 30rpx;
+  line-height: 1.5;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  font-feature-settings: "tnum" 1, "ss01" 1;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+view, text, image, button, scroll-view, input {
+  box-sizing: border-box;
+}
+
+/* ===============================================
+   全局：清除 input / textarea / button 的白边、白底
+   iOS 小程序原生控件会在背景透明/非白场景里露出一圈系统白色。
+   统一做干净化处理，由各业务样式再自行设置背景。
+   =============================================== */
+input, textarea {
+  background: transparent;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* 业务上如需在深色或纯色卡上放 input，只要设置自身 background 就会覆盖 */
+
+/* button 原生默认也有一层 #FFF 背景和 1rpx 边框，先统一清掉 */
+button {
+  background: transparent;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  line-height: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+button::after {
+  /* 微信小程序原生 button 会有 ::after 一圈 1rpx 边框，清掉 */
+  border: none;
+  border-radius: 0;
+}
+
+/* ===== 主题色（iOS 系统橙 + 品牌橙） ===== */
+.text-primary { color: #FC9700; }
+.bg-primary { background-color: #FC9700; }
+
+/* ===== iOS 文字色阶 ===== */
+.text-label-primary   { color: #1d1d1f; }
+.text-label-secondary { color: #6e6e73; }
+.text-label-tertiary  { color: #86868b; }
+.text-label-quaternary { color: #c7c7cc; }
+
+/* ===== 章节小帽标（iOS eyebrow label） ===== */
+.eyebrow {
+  display: inline-block;
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #FC9700;
+  letter-spacing: 4rpx;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+/* ===== 大标题（Display） ===== */
+.display-title {
+  font-size: 88rpx;
+  font-weight: 800;
+  color: #1d1d1f;
+  line-height: 1.05;
+  letter-spacing: -2.4rpx;
+}
+
+/* ===== H1 页面主标题 ===== */
+.h1-title {
+  font-size: 64rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+  line-height: 1.1;
+  letter-spacing: -1.6rpx;
+}
+
+/* ===== H2 区块标题 ===== */
+.h2-title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+  line-height: 1.2;
+  letter-spacing: -0.8rpx;
+}
+
+/* ===== 副标题（H1 下方描述） ===== */
+.subtitle-lead {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #6e6e73;
+  line-height: 1.5;
+  letter-spacing: -0.2rpx;
+}
+
+/* ===== 正文 ===== */
+.body-text {
+  font-size: 28rpx;
+  font-weight: 400;
+  color: #3a3a3c;
+  line-height: 1.7;
+}
+
+/* ===== 注释 / caption ===== */
+.caption-text {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: #86868b;
+  line-height: 1.45;
+  letter-spacing: 0.2rpx;
+}
+
+/* ===== 主按钮（填充，iOS 主操作） ===== */
+.btn-primary {
+  background: linear-gradient(180deg, #FFB140 0%, #FC9700 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 32rpx;
+  padding: 28rpx 60rpx;
+  font-size: 34rpx;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+  box-shadow: 0 8rpx 24rpx rgba(252, 151, 0, 0.28);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* ===== 次级按钮（描边） ===== */
+.btn-outline {
+  background-color: rgba(255, 255, 255, 0.72);
+  color: #1d1d1f;
+  border: 1rpx solid rgba(60, 60, 67, 0.18);
+  border-radius: 32rpx;
+  padding: 26rpx 60rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+}
+
+/* ===== 通用容器 ===== */
+.container {
+  min-height: 100vh;
+  position: relative;
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* ===== 毛玻璃卡片（iOS 风格核心组件） ===== */
+.section-card {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(30px);
+  -webkit-backdrop-filter: saturate(180%) blur(30px);
+  border-radius: 28rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.06),
+              0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+}
+
+/* ===== 分割线 ===== */
+.hairline {
+  height: 1rpx;
+  background: rgba(60, 60, 67, 0.1);
+  width: 100%;
+}
+
+/* ===== 安全区 ===== */
+.nav-placeholder {
+  height: calc(88rpx + env(safe-area-inset-top));
+}
+
+.bottom-safe-area {
+  height: calc(100rpx + env(safe-area-inset-bottom));
+}
+
+/* ===== 弹窗（iOS Alert 风格） ===== */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: rgba(250, 250, 252, 0.92);
+  backdrop-filter: saturate(180%) blur(30px);
+  -webkit-backdrop-filter: saturate(180%) blur(30px);
+  border-radius: 28rpx;
+  padding: 48rpx 40rpx 32rpx;
+  width: 80%;
+  max-width: 600rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.12);
+}
+
+.modal-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  text-align: center;
+  margin-bottom: 12rpx;
+  letter-spacing: -0.3rpx;
+}
+
+.modal-desc {
+  font-size: 26rpx;
+  color: #6e6e73;
+  text-align: center;
+  margin-bottom: 36rpx;
+  line-height: 1.5;
+}
+
+.modal-btns {
+  display: flex;
+  justify-content: space-around;
+  gap: 20rpx;
+}
+
+.modal-btn-cancel {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx;
+  border-radius: 40rpx;
+  border: 1rpx solid rgba(60, 60, 67, 0.18);
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #6e6e73;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.modal-btn-confirm {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx;
+  border-radius: 40rpx;
+  font-size: 30rpx;
+  color: #ffffff;
+  font-weight: 600;
+  background: linear-gradient(180deg, #FFB140 0%, #FC9700 100%);
+  box-shadow: 0 4rpx 16rpx rgba(252, 151, 0, 0.3);
+}
+
+.modal-btn-confirm:active,
+.modal-btn-cancel:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+/* ===== 背景图 opacity 档位（全局） ===== */
+.bg-image-dim    { opacity: 0.10; }
+.bg-image-light  { opacity: 0.18; }
+.bg-image-medium { opacity: 0.26; }
+
+/* ===== 公共背景图基础样式 ===== */
+.bg-image {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* ===== 公共自定义导航栏（iOS large-title 风格） ===== */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  background: rgba(245, 245, 247, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.nav-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  letter-spacing: -0.3rpx;
+}
+
+.nav-back {
+  position: absolute;
+  left: 20rpx;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-arrow,
+.nav-back-icon {
+  font-size: 48rpx;
+  color: #FC9700;
+  font-weight: 300;
+}
+
+.nav-placeholder {
+  width: 60rpx;
+}

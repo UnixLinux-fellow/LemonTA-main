@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx jest *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(node -e \"try { require\\('./utils/layoutCompute.js'\\); console.log\\('layoutCompute module is valid JS'\\); } catch\\(e\\) { console.log\\('layoutCompute error:', e.message\\); }\")",
+      "Bash(node -e \"try { var fs = require\\('fs'\\); var code = fs.readFileSync\\('packageDesign/layout/layout.js', 'utf8'\\); new Function\\(code\\); console.log\\('layout.js has no syntax errors'\\); } catch\\(e\\) { console.log\\('SYNTAX ERROR:', e.message\\); }\")",
+      "Bash(node -e \"try { require\\('./pages/knowledge/glbviewer/glbviewer.js'\\); console.log\\('Syntax OK'\\); } catch\\(e\\) { console.log\\('Syntax error:', e.message\\); }\")",
+      "Bash(node -c \"pages/knowledge/glbviewer/glbviewer.js\")",
+      "Bash(node --check \"pages/knowledge/glbviewer/glbviewer.js\")",
+      "Bash(node --check pages/knowledge/glbviewer/glbviewer.js)",
+      "Bash(node --check utils/threeScene.js)",
+      "Bash(grep *)",
+      "WebSearch",
+      "Bash(curl -sL \"https://cdn.jsdelivr.net/gh/mrdoob/three.js@r108/examples/js/loaders/GLTFLoader.js\" -o \"D:/工程/柠檬塔/程序/LemonTA-main/LemonTA-main/utils/GLTFLoader_orig.js\")",
+      "Bash(wc -l \"D:\\\\\\\\工程\\\\\\\\柠檬塔\\\\\\\\程序\\\\\\\\LemonTA-main\\\\\\\\LemonTA-main\\\\\\\\utils\\\\\\\\roomScene.js\")"
+    ]
+  }
+}

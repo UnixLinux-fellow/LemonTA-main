@@ -1,0 +1,154 @@
+/* pages/home/home.wxss */
+
+.container {
+  width: 100%;
+  background: #f5f3ef;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.page-section {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  opacity: 0.7;
+}
+
+/* ===== 首页 ===== */
+.home-hero {
+  display: flex;
+  flex-direction: column;
+  background: #f5f3ef;
+}
+
+/* 背景遮罩：压暗底图，让前景文字/CTA 更聚焦 */
+.home-hero::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(245, 243, 239, 0.35);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  /* 顶部留出约 18~20% 屏高，让 Hi/标题整体下移，对齐设计稿 */
+  padding: 18vh 40rpx 0;
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 100%;
+}
+
+/* ===== 标题组 ===== */
+.hero-title {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 20rpx;
+}
+
+/* Hi —— 粗黑（Black 900） */
+.hi-text {
+  font-size: 104rpx;
+  font-weight: 900;
+  color: #1d1d1f;
+  line-height: 1.05;
+  letter-spacing: -2rpx;
+  margin-bottom: 24rpx;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}
+
+/* 欢迎来到 —— 极细（Thin 100） */
+.welcome-text {
+  font-size: 88rpx;
+  font-weight: 100;
+  color: #1d1d1f;
+  line-height: 1.2;
+  letter-spacing: 0;
+  margin-bottom: 10rpx;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}
+
+/* 柠檬塔定制系统 —— 极细（Thin 100），7字尽量一行 */
+.brand-text {
+  font-size: 84rpx;
+  font-weight: 100;
+  color: #1d1d1f;
+  line-height: 1.2;
+  letter-spacing: -1rpx;
+  white-space: nowrap;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}
+
+/* ===== 特性行 ===== */
+.hero-features {
+  width: 100%;
+  margin-top: 16rpx;
+}
+
+.hero-features text {
+  font-size: 28rpx;
+  font-weight: 900;
+  color: #1d1d1f;
+  line-height: 1.4;
+  letter-spacing: 0;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}
+
+/* ===== 主 CTA —— 文字式（位于约 70~80% 高度处） ===== */
+.hero-cta-wrap {
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: 22%;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx 24rpx;
+  gap: 16rpx;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.hero-action-hover {
+  transform: scale(0.98);
+  opacity: 0.6;
+}
+
+.action-icon {
+  width: 52rpx;
+  height: 52rpx;
+}
+
+.action-text {
+  font-size: 52rpx;
+  font-weight: 300;
+  color: #1d1d1f;
+  letter-spacing: 2rpx;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}

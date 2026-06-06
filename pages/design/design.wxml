@@ -1,0 +1,82 @@
+<!--pages/design/design.wxml-->
+<wxs src="../../utils/assets.wxs" module="assets" />
+<view class="container">
+  <image class="bg-image bg-image-light" src="{{assets.bg('T3')}}" mode="aspectFill" lazy-load />
+  
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <text class="nav-title">设计</text>
+    </view>
+  </view>
+  
+  <view class="design-content" style="padding-top: {{statusBarHeight + navBarHeight + 40}}px;">
+
+    <!-- 页面标题 -->
+    <view class="design-header">
+      <text class="header-title">快速设计，一键获取</text>
+      <text class="header-subtitle">全套图纸 · 成本明细 · 配件清单</text>
+    </view>
+
+    <!-- 未登录状态 -->
+    <view wx:if="{{!isLoggedIn}}" class="login-prompt">
+      <view class="section-card login-card">
+        <view class="login-title-wrap">
+          <text class="login-title">快速注册，开始设计</text>
+        </view>
+        <view class="login-desc">
+          <text>注册后可<text class="bold">在线保存设计文件</text>。</text>
+          <text>由于文件较大，请<text class="bold">准确填写邮箱</text>，</text>
+          <text>用于接收全套生产图纸、配件清单、成本透视表等文件。</text>
+        </view>
+        <button class="btn-register" bindtap="goRegister">
+          <text class="btn-register-text">注册 / 登录</text>
+        </button>
+      </view>
+    </view>
+
+    <!-- 已登录状态: 设计主页 -->
+    <view wx:if="{{isLoggedIn}}" class="design-main">
+
+      <!-- 主 CTA -->
+      <view class="cta-block">
+        <button class="btn-new-design" bindtap="startNewDesign">
+          <text class="btn-plus">+</text>
+          <text class="btn-new-design-text">开始全新设计</text>
+        </button>
+      </view>
+
+      <!-- 已保存设计列表 -->
+      <view class="saved-section" wx:if="{{designs.length > 0}}">
+        <text class="saved-heading">已保存的设计</text>
+        <view class="saved-list">
+          <view class="design-item" wx:for="{{designs}}" wx:key="_id" bindtap="openDesign" data-index="{{index}}" data-id="{{item._id}}">
+            <view class="design-item-info">
+              <text class="design-name">{{item.name}}</text>
+            </view>
+            <view class="design-delete" catchtap="deleteDesign" data-index="{{index}}" data-id="{{item._id}}">
+              <text class="design-delete-icon">✕</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{designs.length === 0}}" class="no-design">
+        <text class="no-design-text">还没有设计方案</text>
+        <text class="no-design-hint">点击上方按钮，开启第一个设计</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 删除确认弹窗 -->
+  <view class="modal-mask" wx:if="{{showDeleteModal}}">
+    <view class="modal-content">
+      <view class="modal-title">是否删除该设计？</view>
+      <view class="modal-desc">删除后无法恢复</view>
+      <view class="modal-btns">
+        <view class="modal-btn-cancel" bindtap="cancelDelete">否</view>
+        <view class="modal-btn-confirm" bindtap="confirmDelete">确认删除</view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,30 @@
+<!--pages/profile/email/email.wxml-->
+<view class="container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="back-arrow">‹</text>
+      </view>
+      <text class="nav-title">修改邮箱地址</text>
+    </view>
+  </view>
+  
+  <view class="email-content" style="padding-top: {{statusBarHeight + navBarHeight + 10}}px;">
+    <view class="email-card">
+      <text class="email-label">当前邮箱</text>
+      <text class="email-current">{{currentEmail || '未设置'}}</text>
+      
+      <text class="email-label" style="margin-top: 40rpx;">新邮箱地址</text>
+      <input class="email-input" 
+             type="text" 
+             placeholder="请输入新的邮箱地址" 
+             value="{{newEmail}}" 
+             bindinput="onInput" />
+      
+      <text class="email-error" wx:if="{{errorMsg}}">{{errorMsg}}</text>
+      
+      <button class="btn-save" bindtap="onSave">保存</button>
+    </view>
+  </view>
+</view>

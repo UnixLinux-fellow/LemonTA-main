@@ -1,0 +1,105 @@
+<!--pages/profile/profile.wxml-->
+<wxs src="../../utils/assets.wxs" module="assets" />
+<view class="container">
+  <!-- 全屏背景图 -->
+  <image class="bg-image bg-image-dim" src="{{assets.bg('T3')}}" mode="aspectFill" lazy-load />
+  
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <text class="nav-title">我的</text>
+    </view>
+  </view>
+
+  <view class="profile-header" style="padding-top: {{statusBarHeight + navBarHeight + 40}}px;">
+    <text class="header-eyebrow">ACCOUNT</text>
+    <text class="header-title">我的</text>
+
+    <!-- 账户大卡（方案A：显示头像/昵称；未登录时引导点击登录；已登录时点右侧铅笔可编辑） -->
+    <view class="account-card" bindtap="onCardTap" hover-class="account-card-hover">
+      <view class="avatar">
+        <image wx:if="{{avatarUrl}}" class="avatar-img" src="{{avatarUrl}}" mode="aspectFill" />
+        <text wx:else class="avatar-text">{{isLoggedIn ? '柠' : '?'}}</text>
+      </view>
+      <view class="user-info">
+        <text class="user-phone">{{isLoggedIn ? (nickName || '柠檬塔用户') : '未登录'}}</text>
+        <text class="user-email" wx:if="{{isLoggedIn && openidTail}}">ID · {{openidTail}}</text>
+        <text class="user-email user-email-empty" wx:else>点击登录，解锁全部功能</text>
+      </view>
+      <!-- 编辑资料按钮（仅已登录时展示） -->
+      <view wx:if="{{isLoggedIn}}" class="edit-profile-btn" catchtap="openEditModal" hover-class="edit-profile-btn-hover">
+        <text class="edit-profile-icon">✎</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="profile-body">
+
+    <!-- 分组：支持 -->
+    <view class="group-label">
+      <text class="group-label-text">支持</text>
+      <view class="group-label-line"></view>
+    </view>
+
+    <view class="menu-card">
+      <view class="menu-item" bindtap="goContact" hover-class="menu-item-hover">
+        <view class="menu-icon-wrap menu-icon-purple">
+          <image class="menu-icon-img" src="/assets/icons/menu-contact.png" mode="aspectFit" lazy-load />
+        </view>
+        <view class="menu-info">
+          <text class="menu-text">联系我们</text>
+          <text class="menu-hint">工作日 9:00 - 18:00</text>
+        </view>
+        <text class="menu-arrow">›</text>
+      </view>
+    </view>
+
+    <text class="app-version">LemonTA · v1.0</text>
+  </view>
+
+  <!-- ===== 编辑资料弹窗 ===== -->
+  <view wx:if="{{editVisible}}" class="edit-mask" bindtap="closeEditModal">
+    <!-- stop 事件冒泡，避免点弹窗内部时关闭 -->
+    <view class="edit-modal" catchtap="noop">
+      <view class="edit-title">完善个人资料</view>
+      <view class="edit-hint">都是可选项，留空也能保存</view>
+
+      <!-- 头像选择（open-type="chooseAvatar" 为微信新规范唯一合规方式） -->
+      <view class="edit-avatar-wrap">
+        <button class="edit-avatar-btn" 
+                open-type="chooseAvatar" 
+                bindchooseavatar="onChooseAvatar"
+                hover-class="edit-avatar-btn-hover">
+          <image wx:if="{{editAvatarTemp || editAvatarUrl}}" 
+                 class="edit-avatar-img" 
+                 src="{{editAvatarTemp || editAvatarUrl}}" 
+                 mode="aspectFill" />
+          <view wx:else class="edit-avatar-placeholder">
+            <text class="edit-avatar-plus">+</text>
+            <text class="edit-avatar-tip">选择头像</text>
+          </view>
+        </button>
+        <text class="edit-avatar-label">点击选择头像</text>
+      </view>
+
+      <!-- 昵称输入（type="nickname" 聚焦时微信键盘会出现"使用微信昵称"按钮） -->
+      <view class="edit-nick-wrap">
+        <text class="edit-nick-label">昵称</text>
+        <input class="edit-nick-input"
+               type="nickname"
+               placeholder="使用微信昵称或自定义"
+               maxlength="20"
+               value="{{editNickName}}"
+               bindinput="onNickInput"
+               bindblur="onNickBlur" />
+      </view>
+
+      <view class="edit-actions">
+        <button class="edit-btn edit-btn-cancel" bindtap="closeEditModal">取消</button>
+        <button class="edit-btn edit-btn-save" bindtap="saveProfile" loading="{{saving}}" disabled="{{saving}}">
+          {{saving ? '保存中' : '保存'}}
+        </button>
+      </view>
+    </view>
+  </view>
+</view>

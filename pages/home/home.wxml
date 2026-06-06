@@ -1,0 +1,35 @@
+<!--pages/home/home.wxml-->
+<wxs src="../../utils/assets.wxs" module="assets" />
+<view class="container" style="min-height:{{windowHeight}}px;">
+
+  <!-- 首页欢迎 -->
+  <view class="page-section home-hero" style="height:{{windowHeight}}px;">
+    <image class="bg-image" src="{{assets.bg('T3')}}" mode="aspectFill" lazy-load />
+
+    <view class="hero-content">
+
+      <!-- 顶部标题组 -->
+      <view class="hero-title">
+        <text class="hi-text">Hi</text>
+        <text class="welcome-text">欢迎来到</text>
+        <text class="brand-text">柠檬塔定制系统</text>
+      </view>
+
+      <!-- 特性行 -->
+      <view class="hero-features">
+        <text>0门槛 | 快速规划 | 一键清单 | 透视成本 | 标准合同</text>
+      </view>
+
+      <!-- 底部主 CTA（文字式） -->
+      <view class="hero-cta-wrap">
+        <view class="hero-action" bindtap="goToDesign" hover-class="hero-action-hover">
+          <text class="action-text">点击</text>
+          <image class="action-icon" src="/assets/icons/design-active.png" mode="aspectFit" />
+          <text class="action-text">开始设计</text>
+        </view>
+      </view>
+
+    </view>
+  </view>
+
+</view>

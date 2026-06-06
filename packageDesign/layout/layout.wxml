@@ -1,0 +1,119 @@
+<!--pages/design/layout/layout.wxml-->
+<wxs src="../../utils/assets.wxs" module="assets" />
+<view class="container">
+  <image class="bg-image bg-image-light" src="{{assets.bg('T3')}}" mode="aspectFill" lazy-load />
+  
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="back-arrow">‹</text>
+      </view>
+      <text class="nav-title">设计</text>
+    </view>
+  </view>
+  
+  <view class="layout-content" style="padding-top: {{statusBarHeight + navBarHeight}}px;">
+    <view class="layout-title">设计效果</view>
+    
+    <!-- 预览区域 - Canvas 3D效果 -->
+    <view class="preview-area" wx:if="{{!showSaveModal && !showResetModal}}">
+      <canvas type="2d" 
+              id="previewCanvas"
+              class="preview-canvas"></canvas>
+    </view>
+    <!-- 弹窗出现时用静态截图替代Canvas -->
+    <view class="preview-area" wx:if="{{showSaveModal || showResetModal}}">
+      <image wx:if="{{previewImagePath}}" src="{{previewImagePath}}" class="preview-canvas" mode="aspectFit" />
+      <view wx:else class="preview-canvas preview-placeholder">
+        <text style="color: #999; font-size: 28rpx;">设计预览</text>
+      </view>
+    </view>
+
+    <!-- 操作按钮行 -->
+    <view class="action-row">
+      <view class="action-btn" bindtap="resetWall">重设墙面</view>
+      <view class="action-btn {{showDoor ? 'active' : ''}}" bindtap="toggleDoor">显示柜门</view>
+    </view>
+
+    <!-- 框架编辑器卡片 -->
+    <view class="editor-card">
+      <view class="editor-title">框架编辑器</view>
+      
+      <!-- 宽度选择 -->
+      <view class="editor-row">
+        <text class="editor-label">宽度</text>
+        <view class="width-options" wx:if="{{!isCustomModule}}">
+          <view class="width-btn {{selectedWidth === 50 ? 'active' : ''}}" 
+                bindtap="selectWidth" data-width="50"
+                wx:if="{{canSelect50}}">50 cm</view>
+          <view class="width-btn {{selectedWidth === 100 ? 'active' : ''}}" 
+                bindtap="selectWidth" data-width="100"
+                wx:if="{{canSelect100}}">100 cm</view>
+        </view>
+        <view class="width-custom" wx:if="{{isCustomModule}}">
+          <text>定制尺寸：{{customWidth}}cm 框架 + 4cm 收口条</text>
+        </view>
+      </view>
+
+      <!-- 颜色选择 -->
+      <view class="editor-row">
+        <text class="editor-label">颜色</text>
+        <view class="color-options">
+          <view class="color-btn {{selectedColor === 'white' ? 'active' : ''}}" 
+                bindtap="selectColor" data-color="white">白色</view>
+          <view class="color-btn {{selectedColor === 'cream' ? 'active' : ''}}" 
+                bindtap="selectColor" data-color="cream">米色</view>
+          <view class="color-btn {{selectedColor === 'other' ? 'other' : ''}}" 
+                bindtap="selectColor" data-color="other">其它颜色</view>
+        </view>
+      </view>
+
+      <!-- 可选模块 -->
+      <view class="module-selector">
+        <scroll-view scroll-x class="module-scroll">
+          <view class="module-item {{selectedModule === item.type ? 'selected' : ''}}" 
+                wx:for="{{availableModules}}" 
+                wx:key="type"
+                bindtap="selectModule" 
+                data-type="{{item.type}}">
+            <image class="module-img" src="{{item.image}}" mode="aspectFit" lazy-load />
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- 底部按钮 -->
+      <view class="editor-btns">
+        <view class="btn-prev" bindtap="prevModule">返回上一模块</view>
+        <view class="btn-next {{isLastModule ? 'confirm' : ''}} {{hasSaved ? 'disabled' : ''}}" bindtap="nextModule">
+          {{hasSaved ? '已保存' : (isLastModule ? '确认布局' : '下一模块')}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 重设墙面确认弹窗 -->
+  <view class="modal-mask" wx:if="{{showResetModal}}">
+    <view class="modal-content">
+      <view class="modal-title">当前设计将不会保存</view>
+      <view class="modal-desc">是否确认？</view>
+      <view class="modal-btns">
+        <view class="modal-btn-cancel" bindtap="cancelReset">否</view>
+        <view class="modal-btn-confirm" bindtap="confirmReset">确认</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 确认保存弹窗 -->
+  <view class="modal-mask" wx:if="{{showSaveModal}}">
+    <view class="modal-content">
+      <view class="modal-title-large">是否确认当前布局</view>
+      <view class="modal-title-large">并保存到我的设计中</view>
+      <view class="modal-desc-small">*确认后可在我的设计下载图纸&成本透视</view>
+      <view class="modal-btns">
+        <view class="modal-btn-cancel" bindtap="cancelSave">继续修改</view>
+        <view class="modal-btn-confirm" bindtap="confirmSave">确认</view>
+      </view>
+    </view>
+  </view>
+</view>

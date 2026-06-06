@@ -1,0 +1,366 @@
+/* pages/design/layout/layout.wxss */
+
+.container {
+  min-height: 100vh;
+  position: relative;
+  background: #fff;
+}
+
+/* 导航栏覆盖 */
+.nav-bar {
+  justify-content: flex-start;
+  padding: 0 30rpx;
+}
+
+.nav-back {
+  position: static;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 30rpx;
+  font-weight: 500;
+  margin-right: 60rpx;
+}
+
+.layout-content {
+  position: relative;
+  z-index: 1;
+  padding: 16rpx 20rpx 200rpx;
+}
+
+.layout-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16rpx;
+  color: #1a1a1a;
+}
+
+/* 预览区域 - 白色背景圆角卡片 */
+.preview-area {
+  width: 100%;
+  box-sizing: border-box;
+  background: #FFFFFF;
+  border: 2rpx solid #f0f0f0;
+  border-radius: 20rpx;
+  margin: 0 0 16rpx;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 画布按容器宽度自适应，保持 360:300 = 6:5 比例；不再硬编码 360x300px，
+   避免小屏(如 iPhone SE)右侧溢出。使用 padding-hack 兼容老基础库 */
+.preview-canvas {
+  width: 100%;
+  height: 520rpx;
+  display: block;
+}
+
+/* 弹窗占位（无 previewImagePath 时） */
+.preview-placeholder {
+  background: #F4F2EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 操作按钮行 */
+.action-row {
+  display: flex;
+  justify-content: center;
+  gap: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.action-btn {
+  padding: 14rpx 36rpx;
+  border: 2rpx solid #d0d0d0;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+  color: #666;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.action-btn.active {
+  border-color: #333;
+  color: #333;
+  font-weight: 600;
+  background: #fff;
+}
+
+/* 框架编辑器卡片 */
+.editor-card {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 24rpx;
+  padding: 30rpx 30rpx 24rpx;
+  margin: 0 10rpx;
+  box-shadow: 0 -4rpx 24rpx rgba(0, 0, 0, 0.05);
+  border: 2rpx solid #f0f0f0;
+}
+
+.editor-title {
+  font-size: 30rpx;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 24rpx;
+  color: #1a1a1a;
+}
+
+.editor-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.editor-label {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  width: 100rpx;
+  flex-shrink: 0;
+}
+
+.width-options {
+  display: flex;
+  gap: 16rpx;
+}
+
+.width-btn {
+  padding: 12rpx 32rpx;
+  border: 2rpx solid #d0d0d0;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+  color: #666;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.width-btn.active {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
+
+.width-custom {
+  font-size: 24rpx;
+  color: #333;
+  background: #f5f5f5;
+  padding: 14rpx 24rpx;
+  border-radius: 40rpx;
+  border: 2rpx solid #e0e0e0;
+}
+
+.color-options {
+  display: flex;
+  gap: 12rpx;
+}
+
+.color-btn {
+  padding: 10rpx 24rpx;
+  border: 2rpx solid #d0d0d0;
+  border-radius: 40rpx;
+  font-size: 24rpx;
+  color: #666;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.color-btn.active {
+  border-color: #333;
+  color: #333;
+}
+
+.color-btn.other {
+  background: #333;
+  color: #fff;
+  border-color: #333;
+}
+
+/* 模块选择器 */
+.module-selector {
+  margin: 16rpx 0;
+}
+
+.module-scroll {
+  white-space: nowrap;
+  padding: 8rpx 0;
+}
+
+.module-item {
+  display: inline-block;
+  width: 150rpx;
+  margin-right: 16rpx;
+  border: 3rpx solid #e8e8e8;
+  border-radius: 16rpx;
+  overflow: hidden;
+  vertical-align: top;
+  background: #fafafa;
+  transition: all 0.2s;
+}
+
+.module-item.selected {
+  border-color: #FC9700;
+  box-shadow: 0 0 12rpx rgba(252, 151, 0, 0.3);
+}
+
+.module-img {
+  width: 150rpx;
+  height: 260rpx;
+  background: #f9f9f9;
+  display: block;
+}
+
+/* 底部按钮 */
+.editor-btns {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20rpx;
+  padding-top: 16rpx;
+}
+
+.btn-prev {
+  padding: 18rpx 36rpx;
+  border: 2rpx solid #d0d0d0;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+  color: #666;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.btn-prev:active {
+  background: #f5f5f5;
+}
+
+.btn-next {
+  padding: 18rpx 48rpx;
+  border: 2rpx solid #d0d0d0;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+  color: #666;
+  background: #fff;
+  transition: all 0.2s;
+}
+
+.btn-next:active {
+  background: #f5f5f5;
+}
+
+.btn-next.confirm {
+  background: #FC9700;
+  color: #fff;
+  border-color: #FC9700;
+  font-weight: bold;
+}
+
+.btn-next.confirm:active {
+  background: #d69320;
+}
+
+/* 已保存状态：按钮置灰 */
+.btn-next.disabled,
+.btn-next.confirm.disabled {
+  background: #E0E0E0;
+  color: #999;
+  border-color: #E0E0E0;
+  font-weight: normal;
+}
+
+.btn-next.disabled:active,
+.btn-next.confirm.disabled:active {
+  background: #E0E0E0;
+}
+
+/* 弹窗样式 */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  width: 580rpx;
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 50rpx 40rpx 40rpx;
+  text-align: center;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.modal-title-large {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.5;
+}
+
+.modal-desc {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 16rpx;
+  margin-bottom: 40rpx;
+}
+
+.modal-desc-small {
+  font-size: 22rpx;
+  color: #bbb;
+  margin-top: 16rpx;
+  margin-bottom: 36rpx;
+}
+
+.modal-btns {
+  display: flex;
+  justify-content: space-around;
+  border-top: 1rpx solid #f0f0f0;
+  padding-top: 30rpx;
+}
+
+.modal-btn-cancel {
+  width: 220rpx;
+  padding: 22rpx 0;
+  text-align: center;
+  border-radius: 40rpx;
+  border: 2rpx solid #e0e0e0;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.modal-btn-cancel:active {
+  background: #f8f8f8;
+}
+
+.modal-btn-confirm {
+  width: 220rpx;
+  padding: 22rpx 0;
+  text-align: center;
+  border-radius: 40rpx;
+  background: #FC9700;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: bold;
+  border: 2rpx solid #FC9700;
+}
+
+.modal-btn-confirm:active {
+  background: #d69320;
+}

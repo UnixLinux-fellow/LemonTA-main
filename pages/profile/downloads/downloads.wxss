@@ -1,0 +1,97 @@
+/* pages/profile/downloads/downloads.wxss */
+
+.container { min-height: 100vh; background: #f5f5f5; }
+
+/* 导航栏覆盖：白色背景 */
+.custom-nav {
+  background: #fff;
+}
+
+.nav-title {
+  font-size: 32rpx;
+}
+
+.downloads-content { padding: 20rpx 30rpx; }
+
+/* 下载列表卡片 */
+.downloads-card {
+  background: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+}
+
+.downloads-header {
+  display: flex;
+  padding: 24rpx 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.col-content {
+  flex: 1;
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.col-time {
+  width: 160rpx;
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  text-align: center;
+}
+
+.col-status {
+  width: 80rpx;
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  text-align: center;
+}
+
+.download-row {
+  display: flex;
+  align-items: center;
+  padding: 30rpx 30rpx;
+  border-bottom: 1rpx solid #f8f8f8;
+}
+
+.download-row:last-child {
+  border-bottom: none;
+}
+
+.download-name {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.download-time {
+  width: 160rpx;
+  font-size: 26rpx;
+  color: #666;
+  text-align: center;
+}
+
+.download-check {
+  width: 80rpx;
+  font-size: 32rpx;
+  color: #666;
+  text-align: center;
+}
+
+/* 底部返回按钮 */
+.back-btn {
+  text-align: center;
+  padding: 40rpx;
+  font-size: 32rpx;
+  color: #FC9700;
+  font-weight: bold;
+}
+
+/* 空状态 */
+.empty-state { display: flex; flex-direction: column; align-items: center; padding: 120rpx 0; background: #fff; border-radius: 20rpx; }
+.empty-icon { font-size: 80rpx; color: #ddd; margin-bottom: 20rpx; }
+.empty-text { font-size: 30rpx; color: #999; margin-bottom: 10rpx; }
+.empty-hint { font-size: 24rpx; color: #ccc; text-align: center; padding: 0 40rpx; }

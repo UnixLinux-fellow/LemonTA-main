@@ -1,0 +1,62 @@
+<!--pages/knowledge/knowledge.wxml-->
+<wxs src="../../utils/assets.wxs" module="assets" />
+<view class="container">
+  <image class="bg-image bg-image-medium" src="{{assets.bg('T2')}}" mode="aspectFill" lazy-load />
+
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <text class="nav-title">知识库</text>
+    </view>
+  </view>
+
+  <view class="knowledge-content" style="padding-top: {{statusBarHeight + navBarHeight + 40}}px;">
+
+    <!-- 页面标题 -->
+    <view class="knowledge-header">
+      <text class="header-eyebrow">KNOWLEDGE BASE</text>
+      <text class="header-title">LemonTA</text>
+      <text class="header-title header-title-accent">知识库</text>
+      <text class="header-subtitle">一键解决全流程问题 · 从预算到验收</text>
+    </view>
+
+    <!-- 分组 -->
+    <block wx:for="{{knowledgeGroups}}" wx:key="label" wx:for-item="group">
+      <view class="group-label">
+        <text class="group-label-text">{{group.label}}</text>
+        <view class="group-label-line"></view>
+      </view>
+
+      <view class="article-list">
+        <view class="article-item"
+              wx:for="{{group.items}}"
+              wx:key="id"
+              wx:for-item="item"
+              hover-class="article-item-hover"
+              bindtap="openArticle"
+              data-id="{{item.id}}"
+              data-title="{{item.title}}"
+              data-type="{{item.type}}"
+              data-imageurl="{{item.imageUrl || ''}}">
+
+          <view class="article-icon">
+            <text wx:if="{{item.type === 'budget'}}">🍋</text>
+            <text wx:if="{{item.type === 'needs'}}">📋</text>
+            <text wx:if="{{item.type === 'inspect'}}">✅</text>
+            <text wx:if="{{item.type === 'image'}}">🗺️</text>
+            <text wx:if="{{item.type === 'move'}}">🚛</text>
+            <text wx:if="{{item.type === 'checklist'}}">📝</text>
+            <text wx:if="{{item.type === 'glbviewer'}}">🧊</text>
+          </view>
+
+          <view class="article-info">
+            <text class="article-title">{{item.title}}</text>
+            <text class="article-subtitle" wx:if="{{item.subtitle}}">{{item.subtitle}}</text>
+          </view>
+
+          <text class="article-arrow">›</text>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

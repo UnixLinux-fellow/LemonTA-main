@@ -1,0 +1,20 @@
+/* pages/profile/contact/contact.wxss */
+
+.container { min-height: 100vh; background: #f8f8f8; }
+
+/* 导航栏覆盖：白色背景 */
+.custom-nav {
+  background: #fff;
+}
+
+.nav-title {
+  font-size: 32rpx;
+}
+
+.contact-content { padding: 20rpx 30rpx; }
+.contact-card { background: #fff; border-radius: 20rpx; padding: 20rpx 40rpx; }
+.contact-item { display: flex; justify-content: space-between; align-items: center; padding: 30rpx 0; border-bottom: 1rpx solid #f5f5f5; }
+.contact-item:last-child { border-bottom: none; }
+.contact-label { font-size: 28rpx; color: #666; }
+.contact-value { font-size: 28rpx; color: #FC9700; font-weight: 500; }
+.copy-hint { font-size: 22rpx; color: #bbb; text-align: center; display: block; margin-top: 20rpx; }

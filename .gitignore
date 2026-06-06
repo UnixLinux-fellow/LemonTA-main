@@ -1,0 +1,20 @@
+# 系统
+.DS_Store
+Thumbs.db
+
+# 依赖
+node_modules/
+cloudfunctions/*/node_modules/
+
+# IDE / 工具缓存
+.codebuddy/
+.idea/
+.vscode/
+*.log
+
+# 微信开发者工具私有配置（含本人开发者偏好）
+project.private.config.json
+
+# 临时
+*.tmp
+*.swp

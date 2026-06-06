@@ -1,0 +1,39 @@
+<!--pages/design/register/register.wxml-->
+<wxs src="../../utils/assets.wxs" module="assets" />
+<view class="container">
+  <image class="bg-image bg-image-light" src="{{assets.bg('T3')}}" mode="aspectFill" lazy-load />
+  
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="back-arrow">‹</text>
+      </view>
+      <text class="nav-title">注册 / 登录</text>
+    </view>
+  </view>
+  
+  <view class="register-content" style="padding-top: {{statusBarHeight + navBarHeight + 20}}px;">
+    <view class="register-header">
+      <text class="reg-title">微信一键</text>
+      <text class="reg-title">登录使用</text>
+    </view>
+
+    <view class="register-info">
+      <text>登录后可 <text class="bold">在线保存设计文件</text></text>
+      <text>并 <text class="bold">一键下载</text> 全套生产图纸、</text>
+      <text>配件清单、成本透视表及其它文件</text>
+      <image class="reg-logo-icon" src="{{assets.icon('design-active')}}" mode="aspectFit" lazy-load />
+    </view>
+
+    <!-- 一键登录（方案A：不要手机号/邮箱，仅拿 openid 作身份凭证） -->
+    <view class="step-section">
+      <button class="btn-phone" bindtap="onLogin" loading="{{loading}}" disabled="{{loading}}">
+        {{loading ? '登录中...' : '微信一键登录'}}
+      </button>
+      <view class="demo-tip">
+        <text class="demo-tip-text">你的微信账号将作为唯一身份凭证</text>
+      </view>
+    </view>
+  </view>
+</view>

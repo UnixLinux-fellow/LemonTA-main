@@ -1,0 +1,221 @@
+<!--pages/knowledge/checklist/checklist.wxml-->
+<wxs src="../../../utils/assets.wxs" module="assets" />
+<wxs module="tools">
+  module.exports.countByStatus = function(itemStates, catIndex, total, status) {
+    var count = 0;
+    for (var i = 1; i <= total; i++) {
+      var key = 'c' + catIndex + '_' + i;
+      var s = itemStates[key] || 'unowned';
+      if (s === status) count++;
+    }
+    return count;
+  }
+  module.exports.statusLabel = function(status) {
+    var labels = { unowned: '未拥有', purchased: '已购买', received: '已签收', owned: '已拥有' };
+    return labels[status] || '未拥有';
+  }
+  module.exports.statusDotClass = function(status) {
+    return 'dot-' + status;
+  }
+</wxs>
+<view class="container">
+  <image class="bg-image" src="{{assets.bg('T2')}}" mode="aspectFill" lazy-load />
+
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="nav-back-icon">←</text>
+      </view>
+      <text class="nav-title">{{currentCategory >= 0 ? currentCategoryData.category + '清单' : '新家物品清单'}}</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <view class="page-content" style="padding-top: {{statusBarHeight + navBarHeight + 10}}px;">
+
+    <!-- ========== 分类总览视图 ========== -->
+    <view class="overview" wx:if="{{currentCategory < 0}}">
+      <view class="overview-header">
+        <text class="overview-title">新家物品清单</text>
+        <text class="overview-desc">8大区域 · 106项物品 · 逐项核对零遗漏</text>
+      </view>
+
+      <!-- 整体统计卡片 -->
+      <view class="stats-card">
+        <view class="stats-ring-row">
+          <view class="stats-ring">
+            <view class="ring-bg"></view>
+            <view class="ring-fill" style="background: conic-gradient(#FC9700 0deg {{overallStats.completionRate * 3.6}}deg, #eee {{overallStats.completionRate * 3.6}}deg 360deg);"></view>
+            <view class="ring-inner">
+              <text class="ring-num">{{overallStats.completionRate}}</text>
+              <text class="ring-unit">%</text>
+            </view>
+          </view>
+          <view class="stats-detail">
+            <view class="stats-item">
+              <view class="stats-dot stats-dot-owned"></view>
+              <text class="stats-label">已拥有</text>
+              <text class="stats-val">{{overallStats.owned}}</text>
+            </view>
+            <view class="stats-item">
+              <view class="stats-dot stats-dot-received"></view>
+              <text class="stats-label">已签收</text>
+              <text class="stats-val">{{overallStats.received}}</text>
+            </view>
+            <view class="stats-item">
+              <view class="stats-dot stats-dot-purchased"></view>
+              <text class="stats-label">已购买</text>
+              <text class="stats-val">{{overallStats.purchased}}</text>
+            </view>
+            <view class="stats-item">
+              <view class="stats-dot stats-dot-unowned"></view>
+              <text class="stats-label">待采购</text>
+              <text class="stats-val">{{overallStats.unowned}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 搜索栏 -->
+      <view class="search-bar">
+        <text class="search-icon">🔍</text>
+        <input class="search-input" placeholder="搜索物品名称或关键词..." value="{{searchQuery}}" bindinput="onSearchInput" />
+        <text class="search-clear" wx:if="{{searchQuery}}" bindtap="clearSearch">✕</text>
+      </view>
+
+      <!-- 搜索结果（覆盖分类列表） -->
+      <view class="search-results" wx:if="{{searchResults}}">
+        <text class="search-result-hint" wx:if="{{searchResults.length === 0}}">未找到匹配的物品</text>
+        <view class="result-item" wx:for="{{searchResults}}" wx:key="catIndex_itemId"
+              bindtap="selectCategory" data-index="{{item.catIndex}}">
+          <view class="result-left">
+            <text class="result-badge">{{item.category}}</text>
+            <text class="result-name">{{item.name}}</text>
+          </view>
+          <view class="result-right">
+            <view class="status-badge status-badge-{{item.status}}">
+              <text>{{tools.statusLabel(item.status)}}</text>
+            </view>
+            <text class="article-arrow">›</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 分类卡片列表 -->
+      <view class="category-list" wx:if="{{!searchResults}}">
+        <view class="category-card"
+              wx:for="{{categories}}"
+              wx:key="id"
+              bindtap="selectCategory"
+              data-index="{{index}}">
+          <view class="cat-card-left">
+            <text class="cat-card-icon">{{item.icon}}</text>
+            <view class="cat-card-info">
+              <text class="cat-card-title">{{item.category}}</text>
+              <text class="cat-card-count">{{item.count}} 项</text>
+            </view>
+          </view>
+          <view class="cat-card-right">
+            <view class="cat-progress">
+              <text class="cat-progress-text">{{categoryStats[index].owned + categoryStats[index].received}}/{{item.count}}</text>
+              <view class="cat-progress-bar">
+                <view class="cat-progress-fill" style="width: {{categoryStats[index].completionRate}}%;"></view>
+              </view>
+            </view>
+            <text class="article-arrow">›</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ========== 分类详情视图 ========== -->
+    <view class="detail" wx:if="{{currentCategory >= 0 && currentCategoryData}}">
+      <!-- 分类统计条 -->
+      <view class="detail-stats-bar">
+        <view class="ds-item">
+          <text class="ds-num ds-num-owned">{{categoryStats[currentCategory].owned}}</text>
+          <text class="ds-label">已拥有</text>
+        </view>
+        <view class="ds-item">
+          <text class="ds-num ds-num-received">{{categoryStats[currentCategory].received}}</text>
+          <text class="ds-label">已签收</text>
+        </view>
+        <view class="ds-item">
+          <text class="ds-num ds-num-purchased">{{categoryStats[currentCategory].purchased}}</text>
+          <text class="ds-label">已购买</text>
+        </view>
+        <view class="ds-item">
+          <text class="ds-num ds-num-unowned">{{categoryStats[currentCategory].unowned}}</text>
+          <text class="ds-label">待采购</text>
+        </view>
+      </view>
+
+      <!-- 搜索栏 -->
+      <view class="search-bar">
+        <text class="search-icon">🔍</text>
+        <input class="search-input" placeholder="在当前分类中搜索..." value="{{searchQuery}}" bindinput="onSearchInput" />
+        <text class="search-clear" wx:if="{{searchQuery}}" bindtap="clearSearch">✕</text>
+      </view>
+
+      <!-- 物品列表 -->
+      <view class="item-list">
+        <block wx:for="{{filteredItems || currentCategoryData.items}}" wx:key="id">
+          <view class="item-card {{itemStates['c' + currentCategory + '_' + item.id] ? 'item-card-' + itemStates['c' + currentCategory + '_' + item.id] : 'item-card-unowned'}}"
+                wx:if="{{!searchQuery || (filteredItems && filteredItems.length > 0)}}">
+            <!-- 长按弹出状态选择 -->
+            <view class="item-main"
+                  bindtap="toggleStatus"
+                  bindlongpress="showStatusSheet"
+                  data-cat-index="{{currentCategory}}"
+                  data-item-id="{{item.id}}">
+              <view class="item-left">
+                <view class="status-dot dot-{{itemStates['c' + currentCategory + '_' + item.id] || 'unowned'}}">
+                  <text wx:if="{{(itemStates['c' + currentCategory + '_' + item.id] || 'unowned') === 'owned'}}">✓</text>
+                  <text wx:elif="{{(itemStates['c' + currentCategory + '_' + item.id] || 'unowned') === 'received'}}">✓✓</text>
+                </view>
+                <text class="item-num">{{item.id}}</text>
+              </view>
+              <view class="item-center">
+                <text class="item-name {{(itemStates['c' + currentCategory + '_' + item.id] || 'unowned') === 'owned' ? 'item-name-done' : ''}}">{{item.name}}</text>
+                <view class="status-badge status-badge-{{itemStates['c' + currentCategory + '_' + item.id] || 'unowned'}}">
+                  <text>{{tools.statusLabel(itemStates['c' + currentCategory + '_' + item.id] || 'unowned')}}</text>
+                  <text class="status-hint"> (点击切换)</text>
+                </view>
+              </view>
+            </view>
+
+            <!-- 关键词行 + 复制按钮 -->
+            <view class="item-keywords-row" wx:if="{{item.keywords}}">
+              <text class="keywords-text">{{item.keywords}}</text>
+              <view class="copy-btn" bindtap="copyKeywords" data-keywords="{{item.keywords}}">
+                <text class="copy-icon">📋</text>
+              </view>
+            </view>
+
+            <!-- 说明文字（可展开） -->
+            <view class="item-desc-wrap" wx:if="{{item.description}}">
+              <view class="item-desc-toggle" bindtap="toggleDescription" data-cat-index="{{currentCategory}}" data-item-id="{{item.id}}">
+                <text class="desc-arrow">{{expandedItems['c' + currentCategory + '_' + item.id] ? '收起 ▲' : '展开说明 ▼'}}</text>
+              </view>
+              <text class="item-desc" wx:if="{{expandedItems['c' + currentCategory + '_' + item.id]}}">{{item.description}}</text>
+            </view>
+          </view>
+        </block>
+        <text class="search-result-hint" wx:if="{{searchQuery && filteredItems && filteredItems.length === 0}}">当前分类未找到匹配物品</text>
+      </view>
+
+      <!-- 底部操作 -->
+      <view class="detail-actions">
+        <view class="action-reset" bindtap="resetCurrentCategory">
+          <text>重置本类</text>
+        </view>
+        <view class="action-back" bindtap="goBack">
+          <text>返回总览</text>
+        </view>
+      </view>
+
+      <view class="bottom-space"></view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LemonTA 登录流程</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Microsoft YaHei", sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    padding: 40px 20px;
+  }
+  h1 { text-align: center; color: #FC9700; margin-bottom: 8px; font-size: 24px; }
+  .subtitle { text-align: center; color: #888; margin-bottom: 40px; font-size: 13px; }
+  .section {
+    max-width: 1100px;
+    margin: 0 auto 48px;
+    background: #16213e;
+    border-radius: 12px;
+    padding: 32px 24px;
+    border: 1px solid #2a2a4a;
+  }
+  .section h2 { color: #FC9700; font-size: 16px; margin-bottom: 20px; border-left: 3px solid #FC9700; padding-left: 12px; }
+  .mermaid { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+
+<h1>LemonTA 登录功能流程</h1>
+<p class="subtitle">方案A：纯 openid 登录 — 微信 openid 即唯一身份凭证，云数据库按 _openid 自动隔离</p>
+
+<!-- ====== 1. 启动静默登录 ====== -->
+<div class="section">
+  <h2>一、启动时自动静默登录 &mdash; app.js onLaunch</h2>
+  <div class="mermaid">
+sequenceDiagram
+    participant User as 用户
+    participant App as app.js onLaunch
+    participant Storage as wx.Storage
+    participant Cloud as wx.cloud
+    participant CF as 云函数 login
+    participant DB as 云数据库
+    participant GD as globalData
+
+    User->>App: 打开小程序
+
+    App->>Cloud: wx.cloud.init() 初始化云环境
+
+    App->>Storage: getStorageSync('userInfo')
+    alt 本地有缓存
+        Storage-->>App: 返回 userInfo
+        App->>GD: 恢复 openid / 头像 / 昵称
+        Note over GD: isLoggedIn = true<br/>首屏即刻渲染，无需等待
+    else 无缓存
+        Note over GD: isLoggedIn = false
+    end
+
+    App->>App: ensureLogin()
+    Note over App: 防重：_loginPromise 单例
+
+    alt globalData.openid 已有
+        App-->>App: resolve(openid) 直接返回
+    else 需要获取
+        App->>CF: callFunction({name:'login'})
+        Note over CF: cloud.getWXContext()
+        CF-->>App: { openid, appid, unionid }
+        App->>GD: openid = xxx, isLoggedIn = true
+        App->>Storage: setStorageSync('userInfo', merged)
+    end
+
+    App->>DB: users 集合 → loadUserProfile()
+    DB-->>App: { avatarFileID, nickName }
+    App->>GD: 同步头像昵称
+
+    App->>DB: config 集合 → loadAppConfig()
+    DB-->>App: { downloadUrl, ... }
+    App->>GD: 同步运营配置
+
+    App->>DB: designs 集合 → refreshDesigns()
+    Note over DB: 按 _openid 自动过滤
+    DB-->>App: [design1, design2, ...]
+    App->>GD: designs = [...]
+    Note over GD: 全局数据就绪，各页面可用
+  </div>
+</div>
+
+<!-- ====== 2. 手动登录 ====== -->
+<div class="section">
+  <h2>二、用户手动登录 &mdash; design → register → 回到 design</h2>
+  <div class="mermaid">
+sequenceDiagram
+    participant User as 用户
+    participant Design as design.js<br/>(设计Tab)
+    participant Register as register.js<br/>(注册页)
+    participant App as app.js
+    participant Cloud as wx.cloud
+    participant DB as 云数据库
+
+    User->>Design: 打开设计Tab
+    Design->>App: checkLogin() 读 globalData.isLoggedIn
+
+    alt 未登录
+        Design-->>User: 渲染登录引导卡<br/>"快速注册，开始设计"
+        User->>Design: 点击 "注册 / 登录"
+        Design->>Register: navigateTo /packageDesign/register/register
+        Register-->>User: 渲染注册页<br/>"微信一键登录使用"<br/>+ 说明文案
+        User->>Register: 点击 "微信一键登录"
+        Register->>Register: setData({loading:true})
+
+        Register->>App: ensureLogin()
+        Note over App: 大概率 globalData.openid 已有<br/>（启动时已静默获取）
+        App-->>Register: resolve(openid)
+
+        opt 首次注册
+            Register->>App: saveUserInfo({registerTime})
+        end
+
+        Register->>App: refreshDesigns()
+        App->>DB: designs 集合查询
+        DB-->>App: 设计列表
+        App-->>Register: 完成
+
+        Register-->>User: Toast "登录成功"
+        Note over Register: 800ms 后 navigateBack
+        Register->>Design: navigateBack
+        Design->>Design: onShow → checkLogin() → isLoggedIn=true
+        Design-->>User: 渲染设计主页<br/>"开始全新设计"按钮<br/>+ 已保存设计列表
+    else 已登录
+        Design-->>User: 直接渲染设计主页
+    end
+  </div>
+</div>
+
+<!-- ====== 3. 防重机制 ====== -->
+<div class="section">
+  <h2>三、并发防重机制 &mdash; ensureLogin 调用时序</h2>
+  <div class="mermaid">
+sequenceDiagram
+    participant PageA as design.js onShow
+    participant PageB as profile.js onShow
+    participant PageC as cost.js onLoad
+    participant App as app.js ensureLogin
+    participant Cloud as 云函数 login
+
+    Note over App: 初始状态：<br/>globalData.openid = ''<br/>_loginPromise = null
+
+    PageA->>App: ensureLogin()
+    App->>App: openid 无 → _loginPromise 无
+    App->>Cloud: callFunction('login')
+    Note over App: _loginPromise = pending
+
+    PageB->>App: ensureLogin()
+    App->>App: openid 无 → _loginPromise 已有
+    App-->>PageB: return _loginPromise（排队）
+
+    PageC->>App: ensureLogin()
+    App->>App: openid 无 → _loginPromise 已有
+    App-->>PageC: return _loginPromise（排队）
+
+    Cloud-->>App: { openid: 'oxxx...' }
+    App->>App: globalData.openid = 'oxxx...'
+    App->>App: _loginPromise = null（未清除，成功保留）
+
+    App-->>PageA: resolve('oxxx...')
+    App-->>PageB: resolve('oxxx...')
+    App-->>PageC: resolve('oxxx...')
+
+    Note over PageA,PageC: 三个页面同时拿到 openid<br/>仅一次真实云函数请求
+
+    rect rgb(40, 30, 30)
+        Note over App: 失败场景
+        alt 云函数异常
+            Cloud-->>App: reject(err)
+            App->>App: _loginPromise = null ⬅ 关键：允许重试
+            App-->>PageA: reject
+            Note over PageA: 下次 onShow 可再次触发登录
+        end
+    end
+  </div>
+</div>
+
+<!-- ====== 4. 数据隔离 ====== -->
+<div class="section">
+  <h2>四、数据隔离模型 &mdash; 云数据库权限</h2>
+  <div class="mermaid">
+flowchart TB
+    subgraph WX["微信平台"]
+        UA["用户 A<br/>openid: oxxx_A"]
+        UB["用户 B<br/>openid: oxxx_B"]
+    end
+
+    subgraph MP["LemonTA 小程序"]
+        APP["app.js<br/>ensureLogin()"]
+        A["用户 A 会话<br/>globalData.openid = oxxx_A"]
+        B["用户 B 会话<br/>globalData.openid = oxxx_B"]
+    end
+
+    subgraph CloudBase["微信云开发"]
+        CF["云函数 login<br/>getWXContext() → OPENID"]
+        subgraph DB["云数据库"]
+            COL["designs 集合<br/>权限：仅创建者可读写"]
+            U1["_openid: oxxx_A<br/>{name:'设计方案1',...}"]
+            U2["_openid: oxxx_A<br/>{name:'设计方案2',...}"]
+            U3["_openid: oxxx_B<br/>{name:'我的方案',...}"]
+        end
+    end
+
+    UA --> CF
+    UB --> CF
+    CF -->|返回 openid| APP
+    APP --> A
+    APP --> B
+
+    A -->|"db.collection('designs').get()"| COL
+    COL -->|"自动注入 _openid: oxxx_A"| U1
+    COL -->|"自动注入 _openid: oxxx_A"| U2
+    COL -->|"返回 A 的2条设计"| A
+
+    B -->|"db.collection('designs').get()"| COL
+    COL -->|"自动注入 _openid: oxxx_B"| U3
+    COL -->|"返回 B 的1条设计"| B
+
+    style UA fill:#FC9700,color:#000
+    style UB fill:#4a90d9,color:#fff
+    style U1 fill:#FC9700,color:#000
+    style U2 fill:#FC9700,color:#000
+    style U3 fill:#4a90d9,color:#fff
+  </div>
+</div>
+
+<!-- ====== 5. 全链路状态机 ====== -->
+<div class="section">
+  <h2>五、登录状态机 &mdash; 各页面消费</h2>
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> 启动: 小程序启动
+
+    启动 --> 检查本地缓存
+    检查本地缓存 --> 有缓存恢复: 命中
+    检查本地缓存 --> 无缓存待登录: 未命中
+
+    有缓存恢复 --> ensureLogin
+    无缓存待登录 --> ensureLogin
+
+    ensureLogin --> 已登录_openid就绪: 成功
+    ensureLogin --> 降级运行: 失败(网络/超时)
+
+    state 已登录_openid就绪 {
+        [*] --> 设计Tab可用
+        [*] --> 个人Tab可用
+        [*] --> 成本计算可用
+
+        设计Tab可用: 显示"新建设计"+"已保存列表"
+        个人Tab可用: 显示头像/昵称/ID + "编辑资料"
+        成本计算可用: 配置面板 + 成本结果
+    }
+
+    state 降级运行 {
+        [*] --> 设计Tab受限
+        [*] --> 个人Tab引导
+
+        设计Tab受限: 显示"登录引导卡"<br/>只能看，不能操作
+        个人Tab引导: 显示"未登录/点击登录"
+    }
+
+    设计Tab受限 --> ensureLogin: 用户点击"注册/登录"
+    个人Tab引导 --> ensureLogin: 用户点击账户卡
+
+    note right of 已登录_openid就绪
+        所有云数据库操作自动按
+        _openid 隔离，无需手动过滤
+    end note
+
+    note right of 降级运行
+        知识库Tab不受影响
+        无需登录即可浏览
+    end note
+  </div>
+</div>
+
+<!-- ====== 6. 编辑资料 ====== -->
+<div class="section">
+  <h2>六、编辑个人资料 &mdash; profile.js saveProfile</h2>
+  <div class="mermaid">
+sequenceDiagram
+    participant User as 用户
+    participant Profile as profile.js
+    participant App as app.js
+    participant Cloud as wx.cloud
+    participant DB as users 集合
+    participant GD as globalData
+
+    User->>Profile: 点击编辑按钮(铅笔图标)
+    Profile->>Profile: openEditModal()<br/>显示弹窗
+
+    User->>Profile: 选头像 (open-type="chooseAvatar")
+    Profile->>Profile: editAvatarTemp = tempFilePath
+
+    User->>Profile: 填昵称 (type="nickname")
+    Profile->>Profile: editNickName = value
+
+    User->>Profile: 点击"保存"
+    Profile->>Profile: setData({saving:true})
+
+    alt 有新头像临时路径
+        Profile->>Cloud: uploadFile('avatars/' + openid + '_' + timestamp)
+        Cloud-->>Profile: cloud:// fileID
+    else 无新头像
+        Note over Profile: 复用原有 fileID
+    end
+
+    Profile->>App: saveUserProfile({avatarFileID, nickName})
+    App->>App: ensureLogin() 确保openid就绪
+    App->>DB: limit(1).get()
+    DB-->>App: existing? or empty
+
+    alt 已有记录
+        App->>DB: doc(_id).update({avatarFileID, nickName, updateTime})
+    else 无记录
+        App->>DB: add({avatarFileID, nickName, createTime, updateTime})
+    end
+
+    DB-->>App: 成功
+    App->>GD: 同步 avatarFileID + nickName
+    App->>GD: 合并写入 userInfo + setStorageSync
+    App-->>Profile: {success:true}
+
+    Profile->>Profile: setData({editVisible:false})
+    Profile->>Profile: _syncLoginState()
+    Profile-->>User: Toast "已保存" + 刷新页面
+  </div>
+</div>
+
+<!-- ====== 7. 页面-数据映射 ====== -->
+<div class="section">
+  <h2>七、页面与登录数据的依赖关系</h2>
+  <div class="mermaid">
+flowchart LR
+    subgraph CloudLayer["云层"]
+        CF_LOGIN["云函数 login<br/>───<br/>返回 openid"]
+        DB_USERS["users 集合<br/>───<br/>头像 / 昵称"]
+        DB_DESIGNS["designs 集合<br/>───<br/>设计数据(最多30条)"]
+        DB_CONFIG["config 集合<br/>───<br/>运营配置(下载链接等)"]
+        STORAGE_AVATAR["云存储<br/>───<br/>avatars/ 头像文件<br/>designs/ 预览图"]
+    end
+
+    subgraph AppCore["app.js 核心"]
+        GD["globalData"]
+        ENSURE["ensureLogin()"]
+        PROFILE_API["loadUserProfile()<br/>saveUserProfile()"]
+        DESIGN_API["refreshDesigns()<br/>saveDesign()<br/>deleteDesignById()"]
+        CONFIG_API["loadAppConfig()"]
+    end
+
+    subgraph MainPackage["主包页面"]
+        HOME["首页 home<br/>───<br/>无登录依赖"]
+        DESIGN["设计 design<br/>───<br/>读取: isLoggedIn, designs<br/>写入: startNewDesign"]
+        KNOWLEDGE["知识库 knowledge<br/>───<br/>无登录依赖"]
+        PROFILE["我的 profile<br/>───<br/>读取: openid, avatarUrl, nickName<br/>写入: saveProfile"]
+    end
+
+    subgraph SubPackage["分包(design-flow)"]
+        REGISTER["注册 register<br/>───<br/>写入: ensureLogin"]
+        PRESET["预设 preset<br/>───<br/>无直接数据依赖"]
+        LAYOUT["布局 layout<br/>───<br/>写入: saveDesign"]
+        COST["成本 cost<br/>───<br/>读取: designs, appConfig"]
+    end
+
+    CF_LOGIN --> ENSURE
+    DB_USERS --> PROFILE_API
+    DB_DESIGNS --> DESIGN_API
+    DB_CONFIG --> CONFIG_API
+
+    ENSURE --> GD
+    PROFILE_API --> GD
+    DESIGN_API --> GD
+    CONFIG_API --> GD
+
+    GD --> HOME
+    GD --> DESIGN
+    GD --> KNOWLEDGE
+    GD --> PROFILE
+    GD --> REGISTER
+    GD --> PRESET
+    GD --> LAYOUT
+    GD --> COST
+
+    PROFILE --> PROFILE_API
+    LAYOUT --> DESIGN_API
+    DESIGN --> DESIGN_API
+    REGISTER --> ENSURE
+    COST --> CONFIG_API
+    PROFILE --> STORAGE_AVATAR
+    LAYOUT --> STORAGE_AVATAR
+
+    style GD fill:#FC9700,color:#000
+    style ENSURE fill:#FC9700,color:#000
+    style REGISTER fill:#e74c3c,color:#fff
+    style DESIGN fill:#4a90d9,color:#fff
+    style PROFILE fill:#4a90d9,color:#fff
+    style KNOWLEDGE fill:#27ae60,color:#fff
+    style HOME fill:#27ae60,color:#fff
+  </div>
+</div>
+
+</body>
+</html>

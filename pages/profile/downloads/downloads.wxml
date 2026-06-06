@@ -1,0 +1,37 @@
+<!--pages/profile/downloads/downloads.wxml-->
+<view class="container">
+  <!-- 自定义导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="back-arrow">‹</text>
+      </view>
+      <text class="nav-title">我的下载</text>
+    </view>
+  </view>
+  
+  <view class="downloads-content" style="padding-top: {{statusBarHeight + navBarHeight + 10}}px;">
+    <view wx:if="{{downloads.length === 0}}" class="empty-state">
+      <text class="empty-icon">☁</text>
+      <text class="empty-text">暂无下载记录</text>
+      <text class="empty-hint">确认布局后，文件将发送到您的邮箱</text>
+    </view>
+    
+    <view wx:if="{{downloads.length > 0}}" class="downloads-card">
+      <!-- 表头 -->
+      <view class="downloads-header">
+        <text class="col-content">内容</text>
+        <text class="col-time">时间</text>
+        <text class="col-status">状态</text>
+      </view>
+      <!-- 下载记录行 -->
+      <view class="download-row" wx:for="{{downloads}}" wx:key="id">
+        <text class="download-name">{{item.name}}</text>
+        <text class="download-time">{{item.time}}</text>
+        <text class="download-check">✓</text>
+      </view>
+      <!-- 返回按钮 -->
+      <view class="back-btn" bindtap="goBack">返回</view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,610 @@
+/* pages/knowledge/checklist/checklist.wxss */
+
+.container {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* 导航栏 */
+.custom-nav {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(20px);
+}
+
+.nav-bar {
+  justify-content: space-between;
+  padding: 0 24rpx;
+}
+
+.nav-back {
+  position: static;
+  width: 72rpx;
+  height: 72rpx;
+}
+
+.nav-back-icon {
+  font-size: 40rpx;
+  font-weight: bold;
+}
+
+.nav-title {
+  font-size: 32rpx;
+  color: #1a1a1a;
+}
+
+.nav-placeholder {
+  width: 72rpx;
+}
+
+/* 页面内容 */
+.page-content {
+  position: relative;
+  z-index: 1;
+  padding: 0 32rpx 120rpx;
+}
+
+/* ========== 总览 ========== */
+.overview-header {
+  text-align: center;
+  padding: 40rpx 0 32rpx;
+}
+
+.overview-title {
+  display: block;
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin-bottom: 12rpx;
+}
+
+.overview-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #888;
+  line-height: 1.5;
+}
+
+/* 整体统计卡片 */
+.stats-card {
+  background: rgba(255,255,255,0.95);
+  border-radius: 24rpx;
+  padding: 32rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.05);
+}
+
+.stats-ring-row {
+  display: flex;
+  align-items: center;
+  gap: 40rpx;
+}
+
+.stats-ring {
+  width: 160rpx;
+  height: 160rpx;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ring-bg {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #f0f0f0;
+  position: absolute;
+}
+
+.ring-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.ring-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ring-num {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #FC9700;
+  line-height: 1;
+}
+
+.ring-unit {
+  font-size: 20rpx;
+  color: #999;
+}
+
+.stats-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.stats-item {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.stats-dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+}
+
+.stats-dot-owned { background: #007AFF; }
+.stats-dot-received { background: #34C759; }
+.stats-dot-purchased { background: #FC9700; }
+.stats-dot-unowned { background: #ccc; }
+
+.stats-label {
+  flex: 1;
+  font-size: 24rpx;
+  color: #666;
+}
+
+.stats-val {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+  min-width: 40rpx;
+  text-align: right;
+}
+
+/* 搜索栏 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.9);
+  border-radius: 20rpx;
+  padding: 16rpx 24rpx;
+  margin-bottom: 24rpx;
+  gap: 12rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+
+.search-icon {
+  font-size: 28rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: 26rpx;
+  color: #333;
+}
+
+.search-clear {
+  font-size: 28rpx;
+  color: #999;
+  padding: 4rpx 8rpx;
+}
+
+.search-result-hint {
+  display: block;
+  text-align: center;
+  font-size: 26rpx;
+  color: #999;
+  padding: 60rpx 0;
+}
+
+/* 搜索结果 */
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.result-item {
+  background: rgba(255,255,255,0.95);
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+
+.result-item:active {
+  transform: scale(0.98);
+  background: rgba(252,151,0,0.06);
+}
+
+.result-left {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.result-badge {
+  font-size: 20rpx;
+  color: #FC9700;
+  background: rgba(252,151,0,0.1);
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  flex-shrink: 0;
+}
+
+.result-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.article-arrow {
+  font-size: 36rpx;
+  color: #ccc;
+  font-weight: bold;
+}
+
+/* 分类卡片列表 */
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.category-card {
+  background: rgba(255,255,255,0.95);
+  border-radius: 24rpx;
+  padding: 32rpx 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.05);
+  border: 2rpx solid rgba(252,151,0,0.08);
+}
+
+.category-card:active {
+  transform: scale(0.98);
+  background: rgba(252,151,0,0.06);
+}
+
+.cat-card-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  flex: 1;
+}
+
+.cat-card-icon {
+  font-size: 48rpx;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(252,151,0,0.08);
+  border-radius: 18rpx;
+}
+
+.cat-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.cat-card-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+.cat-card-count {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.cat-card-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.cat-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+}
+
+.cat-progress-text {
+  font-size: 22rpx;
+  color: #FC9700;
+  font-weight: 600;
+}
+
+.cat-progress-bar {
+  width: 80rpx;
+  height: 6rpx;
+  background: #eee;
+  border-radius: 3rpx;
+  overflow: hidden;
+}
+
+.cat-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FC9700, #FFB84D);
+  border-radius: 3rpx;
+  transition: width 0.3s;
+}
+
+/* ========== 分类详情 ========== */
+.detail-stats-bar {
+  display: flex;
+  background: rgba(255,255,255,0.95);
+  border-radius: 20rpx;
+  padding: 24rpx 20rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+
+.ds-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.ds-num {
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.ds-num-owned { color: #007AFF; }
+.ds-num-received { color: #34C759; }
+.ds-num-purchased { color: #FC9700; }
+.ds-num-unowned { color: #999; }
+
+.ds-label {
+  font-size: 20rpx;
+  color: #999;
+}
+
+/* 物品列表 */
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.item-card {
+  background: rgba(255,255,255,0.95);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  border: 2rpx solid transparent;
+  border-left-width: 6rpx;
+  transition: all 0.25s;
+}
+
+.item-card-unowned { border-left-color: #ddd; }
+.item-card-purchased { border-left-color: #FC9700; background: rgba(252,151,0,0.03); }
+.item-card-received { border-left-color: #34C759; background: rgba(52,199,89,0.03); }
+.item-card-owned { border-left-color: #007AFF; background: rgba(0,122,255,0.03); }
+
+.item-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.item-main:active {
+  opacity: 0.7;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding-top: 6rpx;
+}
+
+.status-dot {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 12rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 3rpx solid #ddd;
+  transition: all 0.2s;
+}
+
+.status-dot text {
+  font-size: 22rpx;
+  color: #fff;
+  font-weight: bold;
+}
+
+.dot-unowned { border-color: #ddd; background: #fafafa; }
+.dot-purchased { border-color: #FC9700; background: linear-gradient(135deg, #FC9700, #FFB84D); }
+.dot-received { border-color: #34C759; background: linear-gradient(135deg, #34C759, #5DD675); }
+.dot-owned { border-color: #007AFF; background: linear-gradient(135deg, #007AFF, #4DA3FF); }
+
+.item-num {
+  font-size: 22rpx;
+  color: #ccc;
+  font-weight: bold;
+  min-width: 32rpx;
+  text-align: center;
+}
+
+.item-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.item-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.item-name-done {
+  color: #999;
+  text-decoration: line-through;
+}
+
+/* 状态徽章 */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  font-size: 22rpx;
+}
+
+.status-badge text {
+  font-size: 22rpx;
+}
+
+.status-badge-unowned { background: #f0f0f0; color: #999; }
+.status-badge-purchased { background: rgba(252,151,0,0.12); color: #FC9700; }
+.status-badge-received { background: rgba(52,199,89,0.12); color: #34C759; }
+.status-badge-owned { background: rgba(0,122,255,0.1); color: #007AFF; }
+
+.status-hint {
+  font-size: 20rpx !important;
+  color: #bbb !important;
+  margin-left: 4rpx;
+}
+
+/* 关键词行 */
+.item-keywords-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 16rpx;
+  padding-left: 66rpx;
+}
+
+.keywords-text {
+  flex: 1;
+  font-size: 22rpx;
+  color: #888;
+  line-height: 1.5;
+  background: #f8f8f8;
+  padding: 8rpx 16rpx;
+  border-radius: 10rpx;
+}
+
+.copy-btn {
+  flex-shrink: 0;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(252,151,0,0.08);
+  border-radius: 12rpx;
+}
+
+.copy-btn:active {
+  background: rgba(252,151,0,0.2);
+  transform: scale(0.9);
+}
+
+.copy-icon {
+  font-size: 28rpx;
+}
+
+/* 说明展开 */
+.item-desc-wrap {
+  margin-top: 12rpx;
+  padding-left: 66rpx;
+}
+
+.item-desc-toggle {
+  padding: 8rpx 0;
+}
+
+.desc-arrow {
+  font-size: 22rpx;
+  color: #FC9700;
+  font-weight: 500;
+}
+
+.item-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.8;
+  margin-top: 8rpx;
+  padding: 16rpx;
+  background: #fafaf8;
+  border-radius: 12rpx;
+  border-left: 4rpx solid rgba(252,151,0,0.3);
+}
+
+/* 底部操作 */
+.detail-actions {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 40rpx;
+  padding: 0 20rpx;
+}
+
+.action-reset {
+  flex: 1;
+  background: #f5f5f5;
+  border-radius: 50rpx;
+  padding: 24rpx 0;
+  text-align: center;
+}
+
+.action-reset text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.action-back {
+  flex: 1;
+  background: linear-gradient(135deg, #FC9700, #FFB84D);
+  border-radius: 50rpx;
+  padding: 24rpx 0;
+  text-align: center;
+  box-shadow: 0 4rpx 16rpx rgba(252,151,0,0.3);
+}
+
+.action-back text {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.bottom-space {
+  height: 60rpx;
+}
