@@ -36,6 +36,15 @@
       <view class="action-btn {{showDoor ? 'active' : ''}}" bindtap="toggleDoor">显示柜门</view>
     </view>
 
+    <!-- 照片模式按钮行 -->
+    <view class="photo-actions" wx:if="{{!photoMode}}">
+      <view class="photo-btn" bindtap="choosePhoto">📷 上传实拍照片</view>
+    </view>
+    <view class="photo-actions" wx:if="{{photoMode}}">
+      <view class="photo-btn remove" bindtap="removePhoto">✕ 移除照片</view>
+      <text class="photo-hint">拖拽橙色角标对准墙面四角</text>
+    </view>
+
     <!-- 框架编辑器卡片 -->
     <view class="editor-card">
       <view class="editor-title">框架编辑器</view>
