@@ -52,7 +52,7 @@ function computeHomography(srcPoints, dstPoints) {
       augmented[maxRow] = tmp;
     }
     var pivot = augmented[col][col];
-    if (Math.abs(pivot) < 1e-12) continue;
+    if (Math.abs(pivot) < 1e-12) return null;
     for (var row2 = 0; row2 < n; row2++) {
       if (row2 === col) continue;
       var factor = augmented[row2][col] / pivot;
@@ -136,15 +136,17 @@ function drawPerspectiveImage(ctx, img, quad, numStrips) {
     var srcY = tTop * imgH;
     var srcH = (tBot - tTop) * imgH;
 
-    var leftTopX = bl.x + (tl.x - bl.x) * tTop;
-    var leftTopY = bl.y + (tl.y - bl.y) * tTop;
-    var leftBotX = bl.x + (tl.x - bl.x) * tBot;
-    var leftBotY = bl.y + (tl.y - bl.y) * tBot;
+    // 左侧边插值：TL (顶部) → BL (底部)
+    var leftTopX = tl.x + (bl.x - tl.x) * tTop;
+    var leftTopY = tl.y + (bl.y - tl.y) * tTop;
+    var leftBotX = tl.x + (bl.x - tl.x) * tBot;
+    var leftBotY = tl.y + (bl.y - tl.y) * tBot;
 
-    var rightTopX = br.x + (tr.x - br.x) * tTop;
-    var rightTopY = br.y + (tr.y - br.y) * tTop;
-    var rightBotX = br.x + (tr.x - br.x) * tBot;
-    var rightBotY = br.y + (tr.y - br.y) * tBot;
+    // 右侧边插值：TR (顶部) → BR (底部)
+    var rightTopX = tr.x + (br.x - tr.x) * tTop;
+    var rightTopY = tr.y + (br.y - tr.y) * tTop;
+    var rightBotX = tr.x + (br.x - tr.x) * tBot;
+    var rightBotY = tr.y + (br.y - tr.y) * tBot;
 
     var dstX = (leftTopX + leftBotX) / 2;
     var dstW = ((rightTopX + rightBotX) - (leftTopX + leftBotX)) / 2;
