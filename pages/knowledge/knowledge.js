@@ -87,6 +87,14 @@ Page({
       return;
     }
 
+    // PD2D 透视投影跳转专用页面
+    if (type === 'pd2d') {
+      wx.navigateTo({
+        url: '/pages/knowledge/pd2d/pd2d'
+      });
+      return;
+    }
+
     // 图片类型：预览大图（带缓存）
     if (type === 'image') {
       var imageUrl = dataset.imageurl || dataset.imageUrl;

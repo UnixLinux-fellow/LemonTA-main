@@ -73,7 +73,8 @@ App({
           { id: 13, title: '全屋水路设备图', subtitle: '净水系统 · 走管参考图', type: 'image', imageUrl: 'cloud://cloud1-5gbuna7d27dafeba.636c-cloud1-5gbuna7d27dafeba-1417087823/downloads/全屋净水-水路设备图.png' },
           { id: 14, title: '搬家核对清单', subtitle: '从准备到入住 · 逐项核对零遗漏', type: 'move' },
           { id: 15, title: '新家物品清单', subtitle: '106项物品核对 · 采购与签收跟踪', type: 'checklist' },
-          { id: 16, title: 'GLB 模型预览', subtitle: '快速渲染三维模型 · 支持 glb/gltf', type: 'glbviewer' }
+          { id: 16, title: 'GLB 模型预览', subtitle: '快速渲染三维模型 · 支持 glb/gltf', type: 'glbviewer' },
+          { id: 17, title: 'PD2D 透视投影', subtitle: '照片透视标记 · 2D投影变换', type: 'pd2d' }
         ]
       }
     ]
