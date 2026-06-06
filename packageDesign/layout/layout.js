@@ -228,6 +228,66 @@ Page({
     this._scheduleDraw();
   },
 
+  /**
+   * Canvas touchstart — 检测是否命中角标
+   */
+  onCanvasTouchStart(e) {
+    if (!this.data.photoMode) return;
+    var touches = e.touches;
+    if (!touches || touches.length === 0) return;
+
+    var touch = touches[0];
+    var corners = this.data.photoCorners;
+    var hitRadius = 20;
+    var hitIndex = -1;
+    var minDist = Infinity;
+
+    for (var i = 0; i < 4; i++) {
+      var dx = touch.x - corners[i].x;
+      var dy = touch.y - corners[i].y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < hitRadius && dist < minDist) {
+        hitIndex = i;
+        minDist = dist;
+      }
+    }
+
+    if (hitIndex >= 0) {
+      this.setData({ draggingCorner: hitIndex });
+    }
+  },
+
+  /**
+   * Canvas touchmove — 拖拽角标
+   */
+  onCanvasTouchMove(e) {
+    if (!this.data.photoMode || this.data.draggingCorner < 0) return;
+    var touches = e.touches;
+    if (!touches || touches.length === 0) return;
+
+    var touch = touches[0];
+    var idx = this.data.draggingCorner;
+    var corners = this.data.photoCorners.slice();
+
+    // 限制在 Canvas 范围内
+    corners[idx] = {
+      x: Math.max(5, Math.min(this.data.canvasWidth - 5, touch.x)),
+      y: Math.max(5, Math.min(this.data.canvasHeight - 5, touch.y))
+    };
+
+    this.setData({ photoCorners: corners });
+    this._scheduleDraw();
+  },
+
+  /**
+   * Canvas touchend — 结束拖拽
+   */
+  onCanvasTouchEnd() {
+    if (this.data.draggingCorner >= 0) {
+      this.setData({ draggingCorner: -1 });
+    }
+  },
+
   initModules() {
     // 初始化模块为标准模块选择，更新可选模块列表
     this.updateAvailableModules();
