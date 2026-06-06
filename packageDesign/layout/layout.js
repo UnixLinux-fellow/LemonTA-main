@@ -1,6 +1,7 @@
 var app = getApp();
 var assets = require('../../utils/assets.js');
 var layoutCompute = require('../../utils/layoutCompute.js');
+var perspective = require('../../utils/perspective.js');
 
 // ====== 性能优化：日志开关 ======
 // 生产环境关闭调试日志；需排查问题时临时改为 true 即可。
@@ -55,6 +56,17 @@ Page({
     canvasHeight: 300,
     previewImagePath: '',  // Canvas截图路径（弹窗时用图片替代Canvas避免遮挡）
 
+    // 照片透视模式
+    photoMode: false,
+    photoPath: '',
+    photoCorners: [
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+      { x: 0, y: 0 }
+    ],
+    draggingCorner: -1,
+
     // 导航栏
     statusBarHeight: 20,
     navBarHeight: 44
@@ -62,6 +74,7 @@ Page({
 
   // 图片缓存
   _imageCache: {},
+  _photoImg: null,
   _canvas: null,
   _ctx: null,
   _canvasRetry: 0,
@@ -137,6 +150,82 @@ Page({
       log('[Canvas] onShow 触发（返回场景），重新初始化 Canvas 并重绘');
       this._reinitCanvasAfterModal();
     }
+  },
+
+  /**
+   * 选择照片（拍照或相册）
+   */
+  choosePhoto() {
+    var self = this;
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: function(res) {
+        var tempPath = res.tempFilePaths[0];
+        if (!tempPath) return;
+        self._loadPhotoToCanvas(tempPath);
+      },
+      fail: function(err) {
+        if (err && err.errMsg && err.errMsg.indexOf('cancel') === -1) {
+          wx.showToast({ title: '选择照片失败', icon: 'none' });
+        }
+      }
+    });
+  },
+
+  /**
+   * 将照片加载到 Canvas Image 对象中
+   */
+  _loadPhotoToCanvas(tempPath) {
+    var self = this;
+    if (!self._canvas) {
+      wx.showToast({ title: 'Canvas 未就绪，请稍后重试', icon: 'none' });
+      return;
+    }
+    var img = self._canvas.createImage();
+    img.onload = function() {
+      self._photoImg = img;
+      self._initDefaultCorners();
+      self.setData({
+        photoMode: true,
+        photoPath: tempPath
+      });
+      self._scheduleDraw();
+    };
+    img.onerror = function() {
+      wx.showToast({ title: '照片加载失败', icon: 'none' });
+    };
+    img.src = tempPath;
+  },
+
+  /**
+   * 初始化默认角点：Canvas 区域向内缩进 20%
+   */
+  _initDefaultCorners() {
+    var cw = this.data.canvasWidth;
+    var ch = this.data.canvasHeight;
+    this.setData({
+      photoCorners: [
+        { x: cw * 0.2, y: ch * 0.2 },
+        { x: cw * 0.8, y: ch * 0.2 },
+        { x: cw * 0.8, y: ch * 0.8 },
+        { x: cw * 0.2, y: ch * 0.8 }
+      ]
+    });
+  },
+
+  /**
+   * 移除照片，回到抽象 3D 视图
+   */
+  removePhoto() {
+    this._photoImg = null;
+    this.setData({
+      photoMode: false,
+      photoPath: '',
+      draggingCorner: -1
+    });
+    this._scheduleDraw();
   },
 
   initModules() {
