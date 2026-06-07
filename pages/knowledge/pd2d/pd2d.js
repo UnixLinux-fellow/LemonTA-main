@@ -29,8 +29,7 @@ Page({
     wallHeight: 260,
     modules: [],
     selectedType: 'a',
-    selectedWidth: 50,
-    showWallModal: false
+    selectedWidth: 50
   },
 
   onLoad() {
@@ -139,7 +138,7 @@ Page({
     var img = self._canvas.createImage();
     img.onload = function() {
       self._photoImg = img;
-      self.setData({ hasPhoto: true, modules: [], mode: 'corners', showWallModal: true });
+      self.setData({ hasPhoto: true, modules: [], mode: 'corners' });
       self._initDefaultCorners();
       self._drawFrame();
     };
@@ -162,15 +161,7 @@ Page({
     this._drawFrame();
   },
 
-  // ========== 墙面尺寸弹窗 ==========
-
-  openWallModal() {
-    this.setData({ showWallModal: true });
-  },
-
-  closeWallModal() {
-    this.setData({ showWallModal: false });
-  },
+  // ========== 墙面尺寸输入 ==========
 
   onWallWidthInput(e) {
     var v = parseInt(e.detail.value, 10);
