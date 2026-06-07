@@ -139,7 +139,7 @@ Page({
     var img = self._canvas.createImage();
     img.onload = function() {
       self._photoImg = img;
-      self.setData({ hasPhoto: true, modules: [], mode: 'corners' });
+      self.setData({ hasPhoto: true, modules: [], mode: 'corners', showWallModal: true });
       self._initDefaultCorners();
       self._drawFrame();
     };

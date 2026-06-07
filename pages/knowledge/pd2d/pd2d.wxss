@@ -145,6 +145,30 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+.btn-small {
+  flex: 1;
+  padding: 14rpx 0;
+  font-size: 24rpx;
+}
+
+.btn-place {
+  flex: 1;
+  padding: 24rpx 0;
+  background: linear-gradient(135deg, #FFB140 0%, #FC9700 100%);
+  border-radius: 16rpx;
+  text-align: center;
+}
+
+.btn-place:active {
+  opacity: 0.85;
+}
+
+.btn-place text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
 /* ===== 柜体选择芯片 ===== */
 .chip {
   padding: 10rpx 20rpx;
@@ -171,6 +195,10 @@
 .chip-active text {
   color: #FC9700;
   font-weight: 600;
+}
+
+.cabinet-row {
+  justify-content: center;
 }
 
 /* ===== 弹窗 ===== */

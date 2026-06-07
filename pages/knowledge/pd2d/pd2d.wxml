@@ -49,19 +49,27 @@
 
   <!-- 底部控制栏 -->
   <view class="bottom-bar">
-    <!-- 照片按钮行 -->
+    <!-- 照片 + 墙面按钮行 -->
     <view class="bar-row">
-      <view class="btn btn-primary" bindtap="choosePhoto" style="flex:2;">
-        <text>{{hasPhoto ? '更换照片' : '上传照片'}}</text>
+      <view class="btn btn-small btn-primary" bindtap="choosePhoto">
+        <text>{{hasPhoto ? '换图' : '上传'}}</text>
       </view>
-      <view class="btn btn-outline" bindtap="openWallModal">
-        <text>墙面 {{wallWidth}}×{{wallHeight}}</text>
+      <view class="btn btn-small btn-outline" bindtap="openWallModal">
+        <text>{{wallWidth}}×{{wallHeight}}</text>
+      </view>
+      <view class="btn btn-small btn-outline" bindtap="removePhoto" wx:if="{{hasPhoto}}">
+        <text>移除</text>
+      </view>
+      <view class="btn btn-small btn-outline" bindtap="resetCorners" wx:if="{{hasPhoto && mode === 'corners'}}">
+        <text>重置角</text>
+      </view>
+      <view class="btn btn-small btn-outline" bindtap="removeLastModule" wx:if="{{hasPhoto && modules.length > 0}}">
+        <text>撤销</text>
       </view>
     </view>
 
-    <!-- 柜体选择行 (仅照片模式) -->
-    <view class="bar-row" wx:if="{{hasPhoto}}">
-      <!-- 类型选择 -->
+    <!-- 柜体类型行 -->
+    <view class="bar-row cabinet-row" wx:if="{{hasPhoto}}">
       <view class="chip {{selectedType === 'a' ? 'chip-active' : ''}}" bindtap="selectType" data-type="a">
         <text>A型</text>
       </view>
@@ -74,26 +82,18 @@
       <view class="chip {{selectedType === 'd' ? 'chip-active' : ''}}" bindtap="selectType" data-type="d">
         <text>D型</text>
       </view>
-      <text class="bar-sep">|</text>
-      <!-- 宽度选择 -->
+    </view>
+
+    <!-- 宽度 + 放置行 -->
+    <view class="bar-row cabinet-row" wx:if="{{hasPhoto}}">
       <view class="chip {{selectedWidth === 50 ? 'chip-active' : ''}}" bindtap="selectWidth" data-width="50">
         <text>50cm</text>
       </view>
       <view class="chip {{selectedWidth === 100 ? 'chip-active' : ''}}" bindtap="selectWidth" data-width="100">
         <text>100cm</text>
       </view>
-    </view>
-
-    <!-- 操作按钮行 -->
-    <view class="bar-row">
-      <view class="btn btn-outline" bindtap="removePhoto" wx:if="{{hasPhoto}}">
-        <text>移除照片</text>
-      </view>
-      <view class="btn btn-outline" bindtap="resetCorners" wx:if="{{hasPhoto && mode === 'corners'}}">
-        <text>重置角点</text>
-      </view>
-      <view class="btn btn-outline" bindtap="removeLastModule" wx:if="{{hasPhoto && modules.length > 0}}">
-        <text>撤销柜体</text>
+      <view class="btn btn-place" bindtap="switchMode">
+        <text>{{mode === 'place' ? '点击照片放置 ' + selectedType.toUpperCase() + '型' + selectedWidth : '切换至摆放模式'}}</text>
       </view>
     </view>
   </view>
