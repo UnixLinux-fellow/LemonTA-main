@@ -48,6 +48,7 @@
             <text wx:if="{{item.type === 'checklist'}}">📝</text>
             <text wx:if="{{item.type === 'glbviewer'}}">🧊</text>
             <text wx:if="{{item.type === 'pd2d'}}">📐</text>
+            <text wx:if="{{item.type === 'pd3d'}}">🧱</text>
           </view>
 
           <view class="article-info">

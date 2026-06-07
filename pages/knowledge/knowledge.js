@@ -95,6 +95,14 @@ Page({
       return;
     }
 
+    // PD3D 空间布置跳转专用页面
+    if (type === 'pd3d') {
+      wx.navigateTo({
+        url: '/pages/knowledge/pd3d/pd3d'
+      });
+      return;
+    }
+
     // 图片类型：预览大图（带缓存）
     if (type === 'image') {
       var imageUrl = dataset.imageurl || dataset.imageUrl;
