@@ -21,6 +21,7 @@ function createSceneManager(canvas, THREE) {
   var roomGroup = null;
   var cabinetGroup = null;
   var highlightMesh = null;
+  var cabinets = []; // { instanceId, modelId, widthCm, isCustom, wallStartCm, scale, group, baseSize }
 
   var wallWidthM = 1.5;
   var wallHeightM = 2.6;
@@ -225,6 +226,208 @@ function createSceneManager(canvas, THREE) {
     if (renderer) renderer.dispose();
     renderer = null; scene = null; camera = null;
     roomGroup = null; cabinetGroup = null; highlightMesh = null;
+    cabinets = [];
+    initialCamState = null;
+    touchStart = null;
+    touchStartDist = 0;
+  }
+
+  function _newInstanceId() {
+    return 'cab_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+  }
+
+  function _xCenterM(wallStartCm, widthCm) {
+    return (wallStartCm + widthCm / 2) / 100 - wallWidthM / 2;
+  }
+
+  function _loadGLB(path) {
+    return new Promise(function(resolve, reject) {
+      try {
+        var fs = wx.getFileSystemManager();
+        var data = null;
+        var paths = [path];
+        if (path.indexOf('/') !== 0) paths.push('/' + path);
+        for (var i = 0; i < paths.length; i++) {
+          try { data = fs.readFileSync(paths[i]); break; } catch (e) {}
+        }
+        if (!data || data.byteLength === 0) {
+          reject(new Error('GLB read failed'));
+          return;
+        }
+        new THREE.GLTFLoader().parse(data, '', function(gltf) {
+          if (!gltf || !gltf.scene) {
+            reject(new Error('GLB parse empty'));
+            return;
+          }
+          resolve(gltf.scene);
+        }, function(err) {
+          reject(err || new Error('GLB parse failed'));
+        });
+      } catch (e) { reject(e); }
+    });
+  }
+
+  function _normalizeCabinetMesh(group, widthCm) {
+    var box = new THREE.Box3().setFromObject(group);
+    var size = new THREE.Vector3();
+    box.getSize(size);
+    var center = new THREE.Vector3();
+    box.getCenter(center);
+    var targetW = widthCm / 100;
+    var targetH = CABINET_HEIGHT_M;
+    var targetD = CABINET_DEPTH_M;
+    var sx = size.x > 0.001 ? targetW / size.x : 1;
+    var sy = size.y > 0.001 ? targetH / size.y : 1;
+    var sz = size.z > 0.001 ? targetD / size.z : 1;
+    var wrap = new THREE.Group();
+    group.position.set(-center.x, -center.y, -center.z);
+    var inner = new THREE.Group();
+    inner.add(group);
+    inner.scale.set(sx, sy, sz);
+    inner.position.set(0, targetH / 2, 0);
+    wrap.add(inner);
+    return { wrap: wrap, baseSize: { x: targetW, y: targetH, z: targetD } };
+  }
+
+  function addCabinet(spec) {
+    var path = spec.modelPath;
+    if (!path) return Promise.reject(new Error('missing modelPath'));
+    return _loadGLB(path).then(function(gltfScene) {
+      var n = _normalizeCabinetMesh(gltfScene, spec.widthCm);
+      meshScaler.preprocess(n.wrap);
+      var sx = (spec.scale && spec.scale.x) || 1;
+      var sy = (spec.scale && spec.scale.y) || 1;
+      var sz = (spec.scale && spec.scale.z) || 1;
+      meshScaler.applyScale(n.wrap, { x: sx, y: sy, z: sz });
+      var instanceId = spec.instanceId || _newInstanceId();
+      n.wrap.userData.instanceId = instanceId;
+      n.wrap.position.set(_xCenterM(spec.wallStartCm, spec.widthCm), 0, CABINET_DEPTH_M / 2);
+      cabinetGroup.add(n.wrap);
+      cabinets.push({
+        instanceId: instanceId,
+        modelId: spec.modelId,
+        widthCm: spec.widthCm,
+        isCustom: !!spec.isCustom,
+        wallStartCm: spec.wallStartCm,
+        scale: { x: sx, y: sy, z: sz },
+        group: n.wrap,
+        baseSize: n.baseSize
+      });
+      if (renderer) renderer.render(scene, camera);
+      return instanceId;
+    });
+  }
+
+  function _findCabinet(instanceId) {
+    for (var i = 0; i < cabinets.length; i++) {
+      if (cabinets[i].instanceId === instanceId) return cabinets[i];
+    }
+    return null;
+  }
+
+  function setCabinetScale(instanceId, scale) {
+    var c = _findCabinet(instanceId);
+    if (!c) return;
+    c.scale = { x: scale.x, y: scale.y, z: scale.z };
+    meshScaler.applyScale(c.group, scale);
+    if (renderer) renderer.render(scene, camera);
+  }
+
+  function _disposeWrap(wrap) {
+    wrap.traverse(function(node) {
+      if (node.geometry) node.geometry.dispose();
+      if (node.material) {
+        if (Array.isArray(node.material)) {
+          node.material.forEach(function(m) { if (m.map) m.map.dispose(); m.dispose(); });
+        } else {
+          if (node.material.map) node.material.map.dispose();
+          node.material.dispose();
+        }
+      }
+    });
+  }
+
+  function removeCabinetByInstanceId(instanceId) {
+    for (var i = 0; i < cabinets.length; i++) {
+      if (cabinets[i].instanceId === instanceId) {
+        cabinetGroup.remove(cabinets[i].group);
+        _disposeWrap(cabinets[i].group);
+        cabinets.splice(i, 1);
+        clearSelection();
+        if (renderer) renderer.render(scene, camera);
+        return;
+      }
+    }
+  }
+
+  function repositionCabinet(instanceId, wallStartCm, widthCm, isCustom) {
+    var c = _findCabinet(instanceId);
+    if (!c) return;
+    c.wallStartCm = wallStartCm;
+    c.widthCm = widthCm;
+    c.isCustom = !!isCustom;
+    c.group.position.x = _xCenterM(wallStartCm, widthCm);
+    if (renderer) renderer.render(scene, camera);
+  }
+
+  function selectCabinetByInstanceId(instanceId) {
+    clearSelection();
+    var c = _findCabinet(instanceId);
+    if (!c) return;
+    var s = c.baseSize;
+    var hlGeo = new THREE.BoxGeometry(s.x * c.scale.x + 0.02,
+                                       s.y * c.scale.y + 0.02,
+                                       s.z * c.scale.z + 0.02);
+    var hlMat = new THREE.MeshBasicMaterial({
+      color: 0xFC9700, transparent: true, opacity: 0.3,
+      depthTest: true, depthWrite: false
+    });
+    highlightMesh = new THREE.Mesh(hlGeo, hlMat);
+    highlightMesh.position.copy(c.group.position);
+    highlightMesh.position.y = (s.y * c.scale.y) / 2;
+    cabinetGroup.add(highlightMesh);
+    if (renderer) renderer.render(scene, camera);
+  }
+
+  function clearSelection() {
+    if (highlightMesh) {
+      cabinetGroup.remove(highlightMesh);
+      if (highlightMesh.geometry) highlightMesh.geometry.dispose();
+      if (highlightMesh.material) highlightMesh.material.dispose();
+      highlightMesh = null;
+    }
+    if (renderer && scene && camera) renderer.render(scene, camera);
+  }
+
+  function hitTest(tapX, tapY) {
+    if (!camera || !canvas.width || !canvas.height) return null;
+    var ndc = {
+      x: (tapX / canvas.width) * 2 - 1,
+      y: -(tapY / canvas.height) * 2 + 1
+    };
+    var raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(ndc, camera);
+    var targets = cabinets.map(function(c) { return c.group; });
+    var hits = raycaster.intersectObjects(targets, true);
+    if (hits.length > 0) {
+      var hit = hits[0].object;
+      while (hit && !hit.userData.instanceId) hit = hit.parent;
+      if (hit && hit.userData.instanceId) {
+        return { instanceId: hit.userData.instanceId };
+      }
+    }
+    return null;
+  }
+
+  function getCabinets() {
+    return cabinets.map(function(c) {
+      return {
+        instanceId: c.instanceId, modelId: c.modelId,
+        widthCm: c.widthCm, isCustom: c.isCustom,
+        wallStartCm: c.wallStartCm,
+        scale: { x: c.scale.x, y: c.scale.y, z: c.scale.z }
+      };
+    });
   }
 
   return {
@@ -235,15 +438,14 @@ function createSceneManager(canvas, THREE) {
     handleTouchStart: handleTouchStart,
     handleTouchMove: handleTouchMove,
     handleTouchEnd: handleTouchEnd,
-    // Filled in by Task 6:
-    addCabinet: function() {},
-    removeCabinetByInstanceId: function() {},
-    repositionCabinet: function() {},
-    setCabinetScale: function() {},
-    selectCabinetByInstanceId: function() {},
-    clearSelection: function() {},
-    hitTest: function() { return null; },
-    getCabinets: function() { return []; }
+    addCabinet: addCabinet,
+    removeCabinetByInstanceId: removeCabinetByInstanceId,
+    repositionCabinet: repositionCabinet,
+    setCabinetScale: setCabinetScale,
+    selectCabinetByInstanceId: selectCabinetByInstanceId,
+    clearSelection: clearSelection,
+    hitTest: hitTest,
+    getCabinets: getCabinets
   };
 }
 
