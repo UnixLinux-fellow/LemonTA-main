@@ -26,9 +26,9 @@ function createGLBSceneManager(canvas, THREE) {
     return lower === 'door' || lower.indexOf('_door') >= 0 || lower.indexOf('door_') >= 0;
   }
 
-  // Orbit state
-  var theta = 0.3;
-  var phi = Math.PI / 4;
+  // Orbit state (Z-up convention: theta = azimuth around Z, phi = elevation)
+  var theta = 0;
+  var phi = Math.PI / 12;
   var radius = 3;
   var target = { x: 0, y: 0, z: 0 };
 
@@ -53,6 +53,7 @@ function createGLBSceneManager(canvas, THREE) {
     scene.background = new THREE.Color(0x1a1a1a);
 
     camera = new THREE.PerspectiveCamera(45, _canvas.width / Math.max(_canvas.height, 1), 0.1, 100);
+    camera.up.set(0, 0, 1);
 
     scene.add(new THREE.AmbientLight(0xffffff, 2.5));
     var dirLight = new THREE.DirectionalLight(0xffffff, 3.0);
@@ -231,6 +232,9 @@ function createGLBSceneManager(canvas, THREE) {
 
   // ---- Camera ----
 
+  // Z-up orbit: theta = azimuth around +Z, phi = elevation above XY plane.
+  // theta=0 places camera along -Y looking toward +Y (so model's -Y face is
+  // front-on to the viewer). camera.up = +Z is set in init().
   function _updateCamera() {
     var sp = Math.sin(phi);
     var cp = Math.cos(phi);
@@ -238,8 +242,8 @@ function createGLBSceneManager(canvas, THREE) {
     var ct = Math.cos(theta);
     camera.position.set(
       target.x + radius * cp * st,
-      target.y + radius * sp,
-      target.z - radius * cp * ct
+      target.y - radius * cp * ct,
+      target.z + radius * sp
     );
     camera.lookAt(target.x, target.y, target.z);
   }
