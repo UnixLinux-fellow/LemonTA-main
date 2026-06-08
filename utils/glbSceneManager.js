@@ -28,7 +28,7 @@ function createGLBSceneManager(canvas, THREE) {
 
   // Orbit state (default front view: camera on +Z side, slight elevation)
   var theta = Math.PI;
-  var phi = Math.PI / 12;
+  var phi = Math.PI / 24;
   var radius = 3;
   var target = { x: 0, y: 0, z: 0 };
 
