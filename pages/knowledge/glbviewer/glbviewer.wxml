@@ -121,6 +121,11 @@
 
   <!-- 底部缩放控制面板 -->
   <view class="scale-panel" wx:if="{{loadStage === 'done'}}">
+    <view class="door-toggle-row" wx:if="{{hasDoor}}">
+      <view class="door-toggle-btn" bindtap="toggleDoor">
+        <text>{{doorVisible ? '隐藏门板' : '显示门板'}}</text>
+      </view>
+    </view>
     <view class="scale-tabs">
       <view class="scale-tab {{scaleMode === 'uniform' ? 'scale-tab-active' : ''}}" bindtap="switchScaleMode" data-mode="uniform">
         <text>等比缩放</text>

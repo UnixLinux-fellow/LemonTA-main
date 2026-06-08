@@ -931,6 +931,25 @@
   font-weight: 600;
 }
 
+.door-toggle-row {
+  display: flex;
+  justify-content: center;
+  margin: 0 32rpx 16rpx;
+}
+
+.door-toggle-btn {
+  padding: 14rpx 40rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid #FC9700;
+  color: #FC9700;
+  font-size: 26rpx;
+  background: rgba(252, 151, 0, 0.06);
+}
+
+.door-toggle-btn:active {
+  background: rgba(252, 151, 0, 0.18);
+}
+
 .scale-sliders {
   padding: 6rpx 32rpx 10rpx;
 }

@@ -71,6 +71,8 @@ Page({
     axisValue: { x: 100, y: 100, z: 100 },
     axisDisplay: { x: '0cm', y: '0cm', z: '0cm' },
     origSizeCm: { x: 0, y: 0, z: 0 },
+    hasDoor: false,
+    doorVisible: false,
   },
 
   onLoad: function(options) {
@@ -1366,6 +1368,8 @@ Page({
                 origSizeCm: origSizeCm,
                 uniformScalePercent: 100,
                 uniformScaleText: '1.00x',
+                hasDoor: mgr.hasDoorMeshes(),
+                doorVisible: false,
                 axisMin: {
                   x: Math.max(1, Math.round(origSizeCm.x * 0.3)),
                   y: Math.max(1, Math.round(origSizeCm.y * 0.3)),
@@ -1463,6 +1467,13 @@ Page({
     }
   },
 
+  toggleDoor: function() {
+    if (!this._glbManager) return;
+    var newVisible = !this.data.doorVisible;
+    this._glbManager.setDoorVisible(newVisible);
+    this.setData({ doorVisible: newVisible });
+  },
+
   resetGLBScale: function() {
     if (this._glbManager) {
       this._glbManager.resetScale();
@@ -1529,7 +1540,9 @@ Page({
       scaleMode: 'uniform',
       uniformScalePercent: 100,
       uniformScaleText: '1.00x',
-      origSizeCm: { x: 0, y: 0, z: 0 }
+      origSizeCm: { x: 0, y: 0, z: 0 },
+      hasDoor: false,
+      doorVisible: false
     });
   },
 
