@@ -1363,12 +1363,14 @@ Page({
           var glbUrl = self.data.glbUrl;
           if (glbUrl) {
             mgr.loadGLB(glbUrl).then(function(origSizeCm) {
+              var hasDoor = mgr.hasDoorMeshes();
+              console.log('[glb] loaded, hasDoor=', hasDoor);
               self.setData({
                 loadStage: 'done',
                 origSizeCm: origSizeCm,
                 uniformScalePercent: 100,
                 uniformScaleText: '1.00x',
-                hasDoor: mgr.hasDoorMeshes(),
+                hasDoor: hasDoor,
                 doorVisible: false,
                 axisMin: {
                   x: Math.max(1, Math.round(origSizeCm.x * 0.3)),
