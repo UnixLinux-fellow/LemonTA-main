@@ -55,11 +55,11 @@ function createSceneManager(canvas, THREE) {
                        target: { x: target.x, y: target.y, z: target.z } };
     _updateCamera();
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    var keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+    var keyLight = new THREE.DirectionalLight(0xffffff, 3.0);
     keyLight.position.set(0, wallHeightM * 0.7, -wallDepthM * 0.8);
     scene.add(keyLight);
-    var fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    var fillLight = new THREE.DirectionalLight(0xffffff, 1.2);
     fillLight.position.set(-wallWidthM / 2, wallHeightM * 0.4, -wallDepthM * 0.5);
     scene.add(fillLight);
 
