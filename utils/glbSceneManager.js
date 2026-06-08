@@ -22,7 +22,8 @@ function createGLBSceneManager(canvas, THREE) {
 
   function _isDoorMesh(name) {
     if (!name) return false;
-    return name === 'Door' || name.indexOf('_Door') >= 0 || name.indexOf('Door_') >= 0;
+    var lower = name.toLowerCase();
+    return lower === 'door' || lower.indexOf('_door') >= 0 || lower.indexOf('door_') >= 0;
   }
 
   // Orbit state
@@ -93,9 +94,10 @@ function createGLBSceneManager(canvas, THREE) {
 
           modelGroup.add(gltf.scene);
 
-          // Collect door meshes by name and hide them by default.
+          // Collect door nodes by name (case-insensitive) and hide them by default.
+          // Setting visible=false on a Group hides its whole subtree.
           gltf.scene.traverse(function (node) {
-            if (node.isMesh && _isDoorMesh(node.name)) {
+            if (_isDoorMesh(node.name)) {
               node.visible = false;
               _doorMeshes.push(node);
             }
