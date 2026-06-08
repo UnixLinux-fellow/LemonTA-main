@@ -92,11 +92,6 @@ function createGLBSceneManager(canvas, THREE) {
           }
           _clearModelGroup();
 
-          // Models are authored Z-up with door panels on the -Y side. Rotate
-          // the scene -90° around X so +Z (height) maps to +Y and -Y (door)
-          // maps to +Z (toward the camera), making the door panels face front.
-          gltf.scene.rotation.x = -Math.PI / 2;
-
           modelGroup.add(gltf.scene);
 
           // Collect door nodes by name (case-insensitive) and hide them by default.
