@@ -7,6 +7,9 @@
         <text class="nav-back-icon">‹</text>
       </view>
       <text class="nav-title">GLB 模型预览</text>
+      <view class="nav-door" wx:if="{{hasDoor && loadStage === 'done'}}" bindtap="toggleDoor">
+        <text class="nav-door-text">{{doorVisible ? '隐藏门板' : '显示门板'}}</text>
+      </view>
       <view class="nav-clear" wx:if="{{glbUrl && loadStage === 'done'}}" bindtap="clearModel">
         <text class="nav-clear-text">清除</text>
       </view>

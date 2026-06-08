@@ -71,6 +71,28 @@
   font-weight: 500;
 }
 
+.nav-door {
+  margin-left: auto;
+  margin-right: 12rpx;
+  padding: 12rpx 24rpx;
+  border-radius: 16rpx;
+  background: #4CD964;
+}
+
+.nav-door + .nav-clear {
+  margin-left: 0;
+}
+
+.nav-door:active {
+  opacity: 0.8;
+}
+
+.nav-door-text {
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: 600;
+}
+
 /* ===== 3D 视口 ===== */
 .viewport {
   position: fixed;
