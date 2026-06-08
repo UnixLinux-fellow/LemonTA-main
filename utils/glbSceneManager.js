@@ -126,7 +126,7 @@ function createGLBSceneManager(canvas, THREE) {
           var maxDim = Math.max(size.x, size.y, size.z, 0.01);
           radius = maxDim * 2.5;
           target.x = 0;
-          target.y = -size.y * 0.25 - 0.5;
+          target.y = -size.y * 0.25;
           target.z = 0;
           _updateCamera();
 
