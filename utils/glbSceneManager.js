@@ -26,9 +26,9 @@ function createGLBSceneManager(canvas, THREE) {
     return lower === 'door' || lower.indexOf('_door') >= 0 || lower.indexOf('door_') >= 0;
   }
 
-  // Orbit state
-  var theta = 0.3;
-  var phi = Math.PI / 4;
+  // Orbit state (default front view: camera on +Z side, slight elevation)
+  var theta = Math.PI;
+  var phi = Math.PI / 12;
   var radius = 3;
   var target = { x: 0, y: 0, z: 0 };
 
