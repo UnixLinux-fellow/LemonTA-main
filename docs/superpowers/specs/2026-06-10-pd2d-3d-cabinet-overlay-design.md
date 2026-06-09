@@ -9,8 +9,52 @@
 PD2D (`pages/knowledge/pd2d/`) 让用户上传一张墙面照片、拖动 4 个角点定义墙面范围，然后通过下方的 3D 模型预览条选择柜体（50cm/100cm × A/B/C/D/G1/G2），点击"下一积木"把柜体逐个排在墙上。当前实现把 GLB 模型仅用于底部缩略图条，照片上的柜体是用 `utils/perspective.js` 的分条法把 2D PNG 透视贴到墙面四边形里。
 
 要求：
-1. 模型预览条按宽度过滤——选 50cm 时只显示 6 个 50cm 模型，选 100cm 时只显示 6 个 100cm 模型。**已实现**（`pd2d.js` 的 `_getModelIdsForWidth` + `selectWidth`），保持不变。
-2. 点击"下一积木"时，被选中的 GLB 模型要以**真正的 3D 立体**形式（带阴影、光照、深度遮挡）渲染到照片上的墙面里，并与照片的透视对齐。**本设计的范围。**
+1. 模型预览条按宽度过滤——选 50cm 时只显示 6 个 50cm 模型，选 100cm 时只显示 6 个 100cm 模型。代码逻辑（`_getModelIdsForWidth` + `selectWidth`）写对了，但**实际是坏的**：切到 100cm 后预览条仍然显示 50cm 的模型。原因见下"宽度切换修复"。
+2. 点击"下一积木"时，被选中的 GLB 模型要以**真正的 3D 立体**形式（带阴影、光照、深度遮挡）渲染到照片上的墙面里，并与照片的透视对齐。
+
+## 宽度切换修复
+
+**症状.** 用户点 50cm（默认）能看到 6 个 50cm 模型；点 100cm 后预览条仍然是 50cm 的 6 个，看不到 100cm 模型。
+
+**根因.** `pd2d.js` 的 `selectWidth` 调用 `_initModelPreview()`：
+```
+_destroyModelPreview()      // preview.dispose() → renderer.dispose()，GL context 销毁
+↓ setTimeout(200)
+createScopedThreejs(canvas) // 第二次绑同一个 webgl canvas，WeChat 下大概率失败
+new WebGLRenderer({canvas}) // 同上
+```
+WeChat 小程序的 webgl canvas 不支持销毁后再次创建上下文。`_initThree` 里 `createScopedThreejs` 失败的 error 被 console 吞掉，`onReady(err)` 返回后页面只 console.error，没有任何 UI 反馈，老的 50cm framebuffer 留在 canvas 上。
+
+**修复策略.** 不再销毁/重建 renderer。给 `cabinetModelPreview.js` 加一个 `setModels(ids, onReady)` 方法：
+
+```js
+function setModels(modelIds, onReady) {
+  // 1. 处置旧模型 group: dispose geometry/material, scene.remove
+  for (var i = 0; i < models.length; i++) {
+    if (models[i]) {
+      models[i].traverse(disposeNode);
+      scene.remove(models[i]);
+    }
+  }
+  models = [];
+
+  // 2. 加载新模型，沿用 init() 里的加载循环（_readGLB → _parseGLB → _fitModelToCell）
+  cellCount = modelIds.length;
+  selectedIndex = -1;
+  // ... 与 init() 完全相同的加载流程，加载完后 onReady && renderAll()
+}
+```
+
+renderer/scene/lights/THREE 实例**保持不变**——这就避开了"二次绑定 webgl canvas"的雷。
+
+**调用方修改.** `pd2d.js`:
+- `selectWidth(e)` 改为：第一次调用走 `_initModelPreview`（懒初始化），后续调用走 `_modelPreview.setModels(newIds, onReady)`。
+- 也可以更简单：`_initModelPreview` 内部判断 `if (this._modelPreview)` 已存在就走 `setModels`，否则走完整 init 路径。这样 `selectWidth` 不需要分支。
+- 同时 `selectWidth` 里要更新 `selectedModelId` 到新宽度组的第一个模型（与 `_initModelPreview` 现有"选中第一项"行为一致）。
+
+**这一改也是 3D overlay 的前置.** Overlay 同样需要 GLB——如果用户切宽度后 overlay 应该还能正确加载新模型；但因为 overlay 是另一个 canvas，不受预览条 canvas 复用问题的牵连。本节修复只针对预览条。
+
+**测试.** 手动验证：进入 PD2D → 默认看到 50cm 6 个 → 点 100cm chip → 看到 100cm 6 个 → 点回 50cm → 看到 50cm 6 个。来回切换不闪屏、不卡死。
 
 ## 总体架构
 
