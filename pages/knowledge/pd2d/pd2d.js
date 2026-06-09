@@ -1,5 +1,7 @@
 var perspective = require('../../../utils/perspective.js');
-var assets = require('../../../utils/assets.js');
+var cabinetCatalog = require('../../../utils/cabinetCatalog.js');
+var cabinetModelPreview = require('../../../utils/cabinetModelPreview.js');
+var cabinetSceneOverlay = require('../../../utils/cabinetSceneOverlay.js');
 
 Page({
   _canvas: null,
@@ -7,8 +9,10 @@ Page({
   _dpr: 2,
   _photoImg: null,
   _canvasRetry: 0,
-  _cabinetImageCache: {},
-  _pendingImages: {},
+  _overlay: null,
+  _overlayCanvas: null,
+  _overlayInitialized: false,
+  _overlayPendingFrame: false,
 
   data: {
     statusBarHeight: 20,
@@ -24,12 +28,18 @@ Page({
       { x: 0, y: 0 }
     ],
     draggingCorner: -1,
-    mode: 'corners',
+    doorVisible: false,
+    isWallFull: false,
     wallWidth: 300,
     wallHeight: 260,
     modules: [],
+    spaceName: '',
+    spaceConfirmed: false,
     selectedType: 'a',
-    selectedWidth: 50
+    selectedWidth: 50,
+    selectedModelId: '50A',
+    modelPreviewReady: false,
+    hasDoor: false
   },
 
   onLoad() {
@@ -87,7 +97,19 @@ Page({
           canvasHeight: canvasHeight
         });
 
-        self._initDefaultCorners();
+        if (self.data.spaceConfirmed && !self._photoImg) {
+          var m = 24;
+          self.setData({
+            corners: [
+              { x: m, y: m },
+              { x: canvasWidth - m, y: m },
+              { x: canvasWidth - m, y: canvasHeight - m },
+              { x: m, y: canvasHeight - m }
+            ]
+          });
+        } else {
+          self._initDefaultCorners();
+        }
         self._drawFrame();
       });
   },
@@ -116,18 +138,62 @@ Page({
     });
   },
 
+  // ========== 空间配置 ==========
+
+  onSpaceNameInput(e) {
+    this.setData({ spaceName: e.detail.value });
+  },
+
+  onConfirmSpace() {
+    var name = (this.data.spaceName || '').trim();
+    if (!name) {
+      wx.showToast({ title: '请输入空间名称', icon: 'none' });
+      return;
+    }
+    var w = parseInt(this.data.wallWidth, 10);
+    var h = parseInt(this.data.wallHeight, 10);
+    if (isNaN(w) || w < 44 || w > 1000) {
+      wx.showToast({ title: '墙宽需在44-1000cm', icon: 'none' });
+      return;
+    }
+    if (isNaN(h) || h < 232 || h > 400) {
+      wx.showToast({ title: '墙高需在232-400cm', icon: 'none' });
+      return;
+    }
+    this.setData({
+      spaceName: name, wallWidth: w, wallHeight: h,
+      spaceConfirmed: true, modules: [],
+      isWallFull: false, doorVisible: false
+    });
+    // wx:if 切换会重建 canvas，延迟重新初始化
+    var self = this;
+    self._canvas = null;
+    self._ctx = null;
+    setTimeout(function() {
+      self.initCanvas();
+      self._initModelPreview();
+      self._initOverlay();
+    }, 120);
+  },
+
   // ========== 照片操作 ==========
 
   choosePhoto() {
     var self = this;
-    wx.chooseImage({
+    wx.chooseMedia({
       count: 1,
+      mediaType: ['image'],
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
       success: function(res) {
-        var tempPath = res.tempFilePaths[0];
+        var files = res.tempFiles || [];
+        var tempPath = files[0] && files[0].tempFilePath;
         if (!tempPath) return;
         self._loadPhoto(tempPath);
+      },
+      fail: function(err) {
+        if (err && err.errMsg && err.errMsg.indexOf('cancel') >= 0) return;
+        wx.showToast({ title: '选择照片失败', icon: 'none' });
       }
     });
   },
@@ -138,27 +204,13 @@ Page({
     var img = self._canvas.createImage();
     img.onload = function() {
       self._photoImg = img;
-      self.setData({ hasPhoto: true, modules: [], mode: 'corners' });
-      self._initDefaultCorners();
+      self.setData({ hasPhoto: true, modules: [], spaceConfirmed: false });
       self._drawFrame();
     };
     img.onerror = function() {
       wx.showToast({ title: '照片加载失败', icon: 'none' });
     };
     img.src = tempPath;
-  },
-
-  removePhoto() {
-    this._photoImg = null;
-    this._cabinetImageCache = {};
-    this._pendingImages = {};
-    this.setData({ hasPhoto: false, draggingCorner: -1, modules: [], mode: 'corners' });
-    this._drawFrame();
-  },
-
-  resetCorners() {
-    this._initDefaultCorners();
-    this._drawFrame();
   },
 
   // ========== 墙面尺寸输入 ==========
@@ -173,34 +225,248 @@ Page({
     if (v >= 232 && v <= 400) this.setData({ wallHeight: v });
   },
 
-  // ========== 模式切换 ==========
-
-  switchMode() {
-    if (!this.data.hasPhoto) return;
-    var newMode = this.data.mode === 'corners' ? 'place' : 'corners';
-    this.setData({ mode: newMode, draggingCorner: -1 });
-    this._drawFrame();
-  },
-
-  // ========== 柜体选择 ==========
-
-  selectType(e) {
-    this.setData({ selectedType: e.currentTarget.dataset.type });
-  },
+  // ========== 柜体宽度选择 ==========
 
   selectWidth(e) {
-    this.setData({ selectedWidth: parseInt(e.currentTarget.dataset.width, 10) });
+    var w = parseInt(e.currentTarget.dataset.width, 10);
+    this.setData({ selectedWidth: w });
+    this._initModelPreview();
   },
 
-  // ========== 放置模式触摸处理 ==========
+  // ========== 积木导航按钮 ==========
 
-  onCanvasTouchStart(e) {
-    if (!this.data.hasPhoto) return;
-
-    if (this.data.mode === 'place') {
-      this._handlePlaceTap(e);
+  prevBlock() {
+    if (this.data.modules.length === 0) {
+      wx.showToast({ title: '已无柜体', icon: 'none' });
       return;
     }
+    var modules = this.data.modules.slice(0, -1);
+    this.setData({ modules: modules, isWallFull: false });
+    this._drawFrame();
+    this._scheduleOverlayUpdate();
+    this._recomputeIsWallFull();
+  },
+
+  nextBlock() {
+    if (this.data.isWallFull) {
+      this._confirmLayout();
+      return;
+    }
+    var wallX = this._findNextWallPosition();
+    if (wallX < 0) {
+      wx.showToast({ title: '墙面已满', icon: 'none' });
+      this.setData({ isWallFull: true });
+      return;
+    }
+    this._placeModule(wallX);
+    this._recomputeIsWallFull();
+  },
+
+  resetWall() {
+    // 重置角点 + 清空模块
+    this.setData({ modules: [], isWallFull: false, draggingCorner: -1 });
+    if (this._photoImg) {
+      this._initDefaultCorners();
+    }
+    this._drawFrame();
+    this._scheduleOverlayUpdate();
+  },
+
+  toggleDoor() {
+    var newVisible = !this.data.doorVisible;
+    this.setData({ doorVisible: newVisible });
+    if (this._modelPreview) {
+      try { this._modelPreview.setDoorVisible(newVisible); } catch (e) {}
+    }
+    if (this._overlay) {
+      try { this._overlay.setDoorVisible(newVisible); } catch (e) {}
+    }
+  },
+
+  _findNextWallPosition() {
+    var skW = 2;
+    var sw = this.data.selectedWidth;
+    var pos = skW;
+    var modules = this.data.modules;
+    for (var i = 0; i < modules.length; i++) {
+      if (pos + sw <= modules[i].wallX) {
+        return pos;
+      }
+      pos = modules[i].wallX + modules[i].width;
+    }
+    if (pos + sw <= this.data.wallWidth - skW) {
+      return pos;
+    }
+    return -1;
+  },
+
+  _recomputeIsWallFull() {
+    var skW = 2;
+    var usedWidth = skW * 2;
+    var modules = this.data.modules;
+    for (var i = 0; i < modules.length; i++) {
+      usedWidth += modules[i].width;
+    }
+    var remaining = this.data.wallWidth - usedWidth;
+    this.setData({ isWallFull: remaining < this.data.selectedWidth + 4 });
+  },
+
+  _confirmLayout() {
+    // TODO: 确认布局，跳转到报价页或保存方案
+    wx.showToast({ title: '布局已确认', icon: 'success' });
+  },
+
+  // ========== 模型预览 (3D GLB thumbnails) ==========
+
+  _getModelIdsForWidth: function(widthCm) {
+    var all = cabinetCatalog.listModels();
+    var ids = [];
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].width === widthCm) {
+        ids.push(all[i].id);
+      }
+    }
+    return ids;
+  },
+
+  _initModelPreview: function() {
+    var self = this;
+    var widthCm = self.data.selectedWidth;
+    var modelIds = self._getModelIdsForWidth(widthCm);
+    if (modelIds.length === 0) return;
+
+    if (self._modelPreview) {
+      self._modelPreview.setModels(modelIds, function(err) {
+        if (err) { console.error('[pd2d] setModels error:', err); return; }
+        try { self._modelPreview.setDoorVisible(self.data.doorVisible); } catch (e) {}
+        self._modelPreview.selectModel(0);
+        self._modelPreview.renderAll();
+        self._syncSelectedFromPreview(0);
+      });
+      return;
+    }
+
+    setTimeout(function() {
+      var query = wx.createSelectorQuery().in(self);
+      query.select('#modelPreviewCanvas')
+        .fields({ node: true, size: true })
+        .exec(function(res) {
+          if (!res || !res[0] || !res[0].node) return;
+          var canvas = res[0].node;
+          canvas.width = res[0].width;
+          canvas.height = res[0].height;
+          var preview = cabinetModelPreview.createPreview(canvas);
+          preview.init(modelIds, function(err) {
+            if (err) { console.error('[pd2d] model preview init error:', err); return; }
+            self._modelPreview = preview;
+            try { preview.setDoorVisible(false); } catch (e) {}
+            self.setData({
+              modelPreviewReady: true,
+              hasDoor: preview.hasDoorMeshes(),
+              doorVisible: false
+            });
+            preview.selectModel(0);
+            preview.renderAll();
+            self._syncSelectedFromPreview(0);
+          });
+        });
+    }, 200);
+  },
+
+  _syncSelectedFromPreview: function(idx) {
+    if (!this._modelPreview) return;
+    var modelId = this._modelPreview.getModelIdAt(idx);
+    if (!modelId) return;
+    var models = require('../../../utils/cabinetCatalog.js').listModels();
+    for (var j = 0; j < models.length; j++) {
+      if (models[j].id === modelId) {
+        this.setData({
+          selectedModelId: modelId,
+          selectedType: models[j].type.toLowerCase(),
+          selectedWidth: models[j].width
+        });
+        return;
+      }
+    }
+  },
+
+  _destroyModelPreview: function() {
+    if (this._modelPreview) {
+      try { this._modelPreview.dispose(); } catch (e) {}
+      this._modelPreview = null;
+      this.setData({ modelPreviewReady: false });
+    }
+  },
+
+  _initOverlay: function() {
+    var self = this;
+    if (self._overlayInitialized) return;
+    var query = wx.createSelectorQuery().in(self);
+    query.select('#pd2dOverlay')
+      .fields({ node: true, size: true })
+      .exec(function(res) {
+        if (!res || !res[0] || !res[0].node) {
+          setTimeout(function() {
+            if (!self._overlayInitialized) self._initOverlay();
+          }, 200);
+          return;
+        }
+        var canvas = res[0].node;
+        var w = res[0].width;
+        var h = res[0].height;
+        if (!w || !h) {
+          setTimeout(function() {
+            if (!self._overlayInitialized) self._initOverlay();
+          }, 200);
+          return;
+        }
+        var overlay = cabinetSceneOverlay.createOverlay(canvas);
+        var ok = overlay.init({ canvasWidth: w, canvasHeight: h, dpr: self._dpr || 2 });
+        if (!ok) {
+          console.error('[pd2d] overlay init failed; falling back to no-3D mode');
+          return;
+        }
+        self._overlay = overlay;
+        self._overlayCanvas = canvas;
+        self._overlayInitialized = true;
+        self._scheduleOverlayUpdate();
+      });
+  },
+
+  _scheduleOverlayUpdate: function() {
+    var self = this;
+    if (!self._overlay) return;
+    if (self._overlayPendingFrame) return;
+    self._overlayPendingFrame = true;
+    var raf = (self._canvas && self._canvas.requestAnimationFrame) || function(cb){ setTimeout(cb, 16); };
+    raf(function() {
+      self._overlayPendingFrame = false;
+      if (!self._overlay) return;
+      self._overlay.update({
+        corners: self.data.corners,
+        wallWidth: self.data.wallWidth,
+        wallHeight: self.data.wallHeight,
+        modules: self.data.modules
+      });
+    });
+  },
+
+  onModelPreviewTouch: function(e) {
+    var preview = this._modelPreview;
+    if (!preview) return;
+    if (e.type !== 'touchstart') return;
+    var touch = e.touches[0];
+    if (!touch) return;
+    var idx = preview.hitTest(touch.x, touch.y);
+    if (idx < 0) return;
+    preview.selectModel(idx);
+    this._syncSelectedFromPreview(idx);
+  },
+
+  // ========== 触摸处理（角点拖拽） ==========
+
+  onCanvasTouchStart(e) {
+    if (!this.data.spaceConfirmed) return;
 
     var touches = e.touches;
     if (!touches || touches.length === 0) return;
@@ -223,100 +489,8 @@ Page({
     }
   },
 
-  _handlePlaceTap(e) {
-    var touches = e.touches;
-    if (!touches || touches.length === 0) return;
-    var touch = touches[0];
-
-    if (!perspective.isConvexQuad(this.data.corners)) {
-      wx.showToast({ title: '请先调整角点为凸四边形', icon: 'none' });
-      return;
-    }
-
-    var H = this._getHomography();
-    if (!H) {
-      wx.showToast({ title: '角点映射失败', icon: 'none' });
-      return;
-    }
-
-    var wallPt = this._photoToWall(H, touch.x, touch.y);
-    if (!wallPt) return;
-
-    var sw = this.data.selectedWidth;
-    var wallX = this._snapWallPos(wallPt.x, sw);
-    if (wallX < 0 || wallX + sw > this.data.wallWidth) {
-      wx.showToast({ title: '该位置无法放置柜体', icon: 'none' });
-      return;
-    }
-
-    this._placeModule(wallX);
-  },
-
-  _getHomography() {
-    var src = [
-      { x: 0, y: 0 },
-      { x: this.data.wallWidth, y: 0 },
-      { x: this.data.wallWidth, y: this.data.wallHeight },
-      { x: 0, y: this.data.wallHeight }
-    ];
-    return perspective.computeHomography(src, this.data.corners);
-  },
-
-  _photoToWall(H, px, py) {
-    // 交换 src/dst 得到逆矩阵 photo→wall
-    var dst = this.data.corners;
-    var src = [
-      { x: 0, y: 0 },
-      { x: this.data.wallWidth, y: 0 },
-      { x: this.data.wallWidth, y: this.data.wallHeight },
-      { x: 0, y: this.data.wallHeight }
-    ];
-    var Hinv = perspective.computeHomography(dst, src);
-    if (!Hinv) return null;
-    return perspective.transformPoint(Hinv, { x: px, y: py });
-  },
-
-  _snapWallPos(wallX, modWidth) {
-    wallX = Math.max(0, Math.min(this.data.wallWidth - modWidth, Math.round(wallX)));
-    var modules = this.data.modules;
-    for (var i = 0; i < modules.length; i++) {
-      var m = modules[i];
-      if (wallX + modWidth > m.wallX && wallX < m.wallX + m.width) {
-        wallX = m.wallX + m.width;
-      }
-    }
-    if (wallX + modWidth > this.data.wallWidth) return -1;
-    return wallX;
-  },
-
-  _placeModule(wallX) {
-    var modules = this.data.modules.slice();
-    modules.push({
-      type: this.data.selectedType,
-      width: this.data.selectedWidth,
-      wallX: wallX,
-      isStandard: true
-    });
-    modules.sort(function(a, b) { return a.wallX - b.wallX; });
-    this.setData({ modules: modules });
-    this._ensureCabinetImages();
-    this._drawFrame();
-  },
-
-  removeLastModule() {
-    if (this.data.modules.length === 0) return;
-    var modules = this.data.modules.slice(0, -1);
-    this.setData({ modules: modules });
-    this._drawFrame();
-  },
-
-  clearModules() {
-    this.setData({ modules: [] });
-    this._drawFrame();
-  },
-
   onCanvasTouchMove(e) {
-    if (!this.data.hasPhoto || this.data.draggingCorner < 0) return;
+    if (!this.data.spaceConfirmed || this.data.draggingCorner < 0) return;
     var touches = e.touches;
     if (!touches || touches.length === 0) return;
     var touch = touches[0];
@@ -328,6 +502,7 @@ Page({
     };
     this.setData({ corners: corners });
     this._drawFrame();
+    this._scheduleOverlayUpdate();
   },
 
   onCanvasTouchEnd() {
@@ -336,160 +511,20 @@ Page({
     }
   },
 
-  // ========== 柜体图片加载 ==========
+  // ========== 柜体放置 ==========
 
-  _ensureCabinetImages() {
-    var self = this;
-    var list = this._buildCabinetList();
-    var keys = [];
-    for (var i = 0; i < list.length; i++) {
-      var key = list[i].imgKey;
-      if (!self._cabinetImageCache[key] && !self._pendingImages[key]) {
-        keys.push(key);
-        self._pendingImages[key] = true;
-      }
-    }
-    if (keys.length === 0) return;
-    self._loadCabinetImages(keys);
-  },
-
-  _loadCabinetImages(keys) {
-    var self = this;
-    var urls = [];
-    for (var i = 0; i < keys.length; i++) {
-      urls.push(assets.picture(keys[i]));
-    }
-
-    if (urls[0] && urls[0].indexOf('cloud://') === 0) {
-      wx.cloud.getTempFileURL({
-        fileList: urls,
-        success: function(res) {
-          var fileList = res.fileList || [];
-          for (var i = 0; i < fileList.length; i++) {
-            var tempUrl = fileList[i].tempFileURL;
-            if (tempUrl) {
-              self._loadImageToCache(keys[i], tempUrl);
-            }
-          }
-        },
-        fail: function() {
-          for (var i = 0; i < keys.length; i++) {
-            delete self._pendingImages[keys[i]];
-          }
-        }
-      });
-    } else {
-      for (var i = 0; i < keys.length; i++) {
-        self._loadImageToCache(keys[i], urls[i]);
-      }
-    }
-  },
-
-  _loadImageToCache(key, src) {
-    var self = this;
-    if (!self._canvas) return;
-    var img = self._canvas.createImage();
-    img.onload = function() {
-      self._cabinetImageCache[key] = img;
-      delete self._pendingImages[key];
-      self._drawFrame();
-    };
-    img.onerror = function() {
-      delete self._pendingImages[key];
-    };
-    img.src = src;
-  },
-
-  // ========== 柜体渲染 ==========
-
-  _buildCabinetList() {
-    var list = [];
-    var data = this.data;
-    var skW = 2;
-    var moduleH = 230;
-    var gapH = data.wallHeight - moduleH - 2;
-    if (gapH < 0) gapH = 0;
-
-    // 左侧收口条
-    list.push({ wallX: 0, wallY: gapH, wallW: skW, wallH: moduleH, imgKey: 'SK/SK-2-230' });
-    if (gapH > 0) {
-      list.push({ wallX: 0, wallY: 0, wallW: skW, wallH: gapH, imgKey: 'SK/SK-2-230' });
-    }
-    list.push({ wallX: 0, wallY: 0, wallW: skW, wallH: 2, imgKey: 'SK/SK-300-2' });
-
-    // 已放置模块
-    var modules = data.modules;
-    for (var i = 0; i < modules.length; i++) {
-      var m = modules[i];
-      var key = m.width + '/' + m.type + '-' + m.width + '-230';
-      list.push({ wallX: m.wallX, wallY: gapH, wallW: m.width, wallH: moduleH, imgKey: key, isModule: true });
-      if (gapH > 0) {
-        var nearGH = this._nearestGapHeight(gapH);
-        list.push({ wallX: m.wallX, wallY: 0, wallW: m.width, wallH: gapH, imgKey: m.width + '/g-' + m.width + '-' + nearGH, isModule: true });
-      }
-      list.push({ wallX: m.wallX, wallY: 0, wallW: m.width, wallH: 2, imgKey: 'SK/SK-300-2' });
-    }
-
-    // 中间顶部收口条
-    var topStartX = skW;
-    var topEndX = data.wallWidth - skW;
-    if (topEndX > topStartX) {
-      list.push({ wallX: topStartX, wallY: 0, wallW: topEndX - topStartX, wallH: 2, imgKey: 'SK/SK-300-2' });
-    }
-
-    // 右侧收口条
-    var rightSkX = data.wallWidth - skW;
-    list.push({ wallX: rightSkX, wallY: gapH, wallW: skW, wallH: moduleH, imgKey: 'SK/SK-2-230' });
-    if (gapH > 0) {
-      list.push({ wallX: rightSkX, wallY: 0, wallW: skW, wallH: gapH, imgKey: 'SK/SK-2-230' });
-    }
-    list.push({ wallX: rightSkX, wallY: 0, wallW: skW, wallH: 2, imgKey: 'SK/SK-300-2' });
-
-    list.sort(function(a, b) { return a.wallX - b.wallX; });
-    return list;
-  },
-
-  _nearestGapHeight(gh) {
-    var heights = [25, 35, 45, 55, 65, 75, 85, 95];
-    var best = heights[0];
-    for (var i = 1; i < heights.length; i++) {
-      if (Math.abs(heights[i] - gh) < Math.abs(best - gh)) best = heights[i];
-    }
-    return best;
-  },
-
-  _computeQuad(H, wallX, wallY, wallW, wallH) {
-    return [
-      perspective.transformPoint(H, { x: wallX, y: wallY }),
-      perspective.transformPoint(H, { x: wallX + wallW, y: wallY }),
-      perspective.transformPoint(H, { x: wallX + wallW, y: wallY + wallH }),
-      perspective.transformPoint(H, { x: wallX, y: wallY + wallH })
-    ];
-  },
-
-  _drawCabinets(ctx, H) {
-    var list = this._buildCabinetList();
-    for (var i = 0; i < list.length; i++) {
-      var cab = list[i];
-      var quad = this._computeQuad(H, cab.wallX, cab.wallY, cab.wallW, cab.wallH);
-
-      var img = this._cabinetImageCache[cab.imgKey];
-      if (img) {
-        perspective.drawPerspectiveImage(ctx, img, quad, 80);
-      } else {
-        ctx.fillStyle = cab.isModule ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.2)';
-        ctx.beginPath();
-        ctx.moveTo(quad[0].x, quad[0].y);
-        for (var j = 1; j < 4; j++) {
-          ctx.lineTo(quad[j].x, quad[j].y);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = cab.isModule ? 'rgba(252, 151, 0, 0.6)' : 'rgba(255,255,255,0.15)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
+  _placeModule(wallX) {
+    var modules = this.data.modules.slice();
+    modules.push({
+      type: this.data.selectedType,
+      width: this.data.selectedWidth,
+      wallX: wallX,
+      isStandard: true
+    });
+    modules.sort(function(a, b) { return a.wallX - b.wallX; });
+    this.setData({ modules: modules });
+    this._drawFrame();
+    this._scheduleOverlayUpdate();
   },
 
   // ========== 主绘制 ==========
@@ -508,25 +543,33 @@ Page({
 
     if (this._photoImg) {
       ctx.drawImage(this._photoImg, 0, 0, cw, ch);
+    } else if (data.spaceConfirmed) {
+      var margin = 24;
+      var wallX = margin;
+      var wallY = margin;
+      var wallW = cw - margin * 2;
+      var wallH = ch - margin * 2;
+      ctx.fillStyle = '#3a3835';
+      ctx.fillRect(wallX, wallY, wallW, wallH);
+      ctx.strokeStyle = 'rgba(252, 151, 0, 0.25)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(wallX, wallY, wallW, wallH);
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(data.wallWidth + ' × ' + data.wallHeight + ' cm', cw / 2, wallY - 8);
+      ctx.textAlign = 'start';
     } else {
       ctx.fillStyle = '#555';
       ctx.font = '14px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('请上传照片', cw / 2, ch / 2);
+      ctx.fillText('上传照片或直接确认', cw / 2, ch / 2);
       ctx.textAlign = 'start';
       return;
     }
 
     var corners = data.corners;
     var isConvex = perspective.isConvexQuad(corners);
-
-    // 柜体渲染（在有照片、四边形凸且至少有一个模块时）
-    if (isConvex && data.modules.length > 0) {
-      var H = this._getHomography();
-      if (H) {
-        this._drawCabinets(ctx, H);
-      }
-    }
 
     // 四边形连线
     ctx.strokeStyle = 'rgba(252, 151, 0, 0.7)';
@@ -582,22 +625,22 @@ Page({
       }
     }
 
-    // 放置模式提示
-    if (data.hasPhoto && data.mode === 'place') {
-      ctx.fillStyle = 'rgba(252, 151, 0, 0.9)';
-      ctx.font = '13px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('点击照片放置' + data.selectedType.toUpperCase() + '型 ' + data.selectedWidth + 'cm 柜体', cw / 2, ch - 12);
+    // 模块计数
+    if (data.modules.length > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(data.modules.length + ' 个柜体', cw - 12, 18);
       ctx.textAlign = 'start';
+    }
+  },
 
-      // 高亮当前选中类型
-      if (isConvex && data.modules.length > 0) {
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.font = '11px sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText(data.modules.length + ' 个柜体', cw - 12, 20);
-        ctx.textAlign = 'start';
-      }
+  onUnload() {
+    this._destroyModelPreview();
+    if (this._overlay) {
+      try { this._overlay.dispose(); } catch (e) {}
+      this._overlay = null;
+      this._overlayInitialized = false;
     }
   },
 
