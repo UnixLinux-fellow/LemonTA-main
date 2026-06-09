@@ -6,85 +6,106 @@
       <view class="nav-back" bindtap="goBack">
         <text class="nav-back-icon">‹</text>
       </view>
-      <text class="nav-title">PD2D</text>
-      <view class="nav-mode" bindtap="switchMode" wx:if="{{hasPhoto}}">
-        <text class="nav-mode-text">{{mode === 'corners' ? '摆放' : '调角'}}</text>
-      </view>
+      <text class="nav-title">{{spaceConfirmed ? spaceName : 'PD2D'}}</text>
     </view>
   </view>
 
-  <!-- Canvas -->
-  <view class="canvas-wrapper" style="padding-top: {{statusBarHeight + navBarHeight}}px; padding-bottom: 20rpx;">
-    <canvas
-      type="2d"
-      id="pd2dCanvas"
-      class="pd2d-canvas"
-      style="width: {{canvasWidth}}px; height: {{canvasHeight}}px;"
-      bindtouchstart="onCanvasTouchStart"
-      bindtouchmove="onCanvasTouchMove"
-      bindtouchend="onCanvasTouchEnd"
-    ></canvas>
-  </view>
+  <!-- ========== 未确认：上传 + 配置 ========== -->
+  <block wx:if="{{!spaceConfirmed}}">
+    <view class="canvas-wrapper" style="padding-top: {{statusBarHeight + navBarHeight}}px;">
+      <canvas
+        type="2d"
+        id="pd2dCanvas"
+        class="pd2d-canvas"
+        style="width: {{canvasWidth}}px; height: {{canvasHeight}}px;"
+      ></canvas>
+    </view>
 
-  <!-- 底部控制栏 -->
-  <view class="bottom-bar">
-    <!-- 墙面尺寸 + 照片按钮行 -->
-    <view class="bar-row dims-row">
-      <text class="dims-label">墙面</text>
-      <input class="dims-input" type="number" value="{{wallWidth}}" bindinput="onWallWidthInput" />
-      <text class="dims-label">×</text>
-      <input class="dims-input" type="number" value="{{wallHeight}}" bindinput="onWallHeightInput" />
-      <text class="dims-label">cm</text>
-      <view class="btn btn-small btn-primary" bindtap="choosePhoto">
-        <text>{{hasPhoto ? '换图' : '上传'}}</text>
+    <view class="upload-trigger" wx:if="{{!hasPhoto}}" bindtap="choosePhoto">
+      <view class="upload-icon-circle">
+        <text class="upload-icon-text">+</text>
       </view>
-      <view class="btn btn-small btn-outline" bindtap="removePhoto" wx:if="{{hasPhoto}}">
-        <text>移除</text>
+      <text class="upload-text">点击上传墙面照片</text>
+    </view>
+
+    <view class="bottom-bar">
+      <view class="bar-row dims-row">
+        <text class="dims-label">名称</text>
+        <input class="name-input" type="text" value="{{spaceName}}" bindinput="onSpaceNameInput" placeholder="空间名称" maxlength="20" />
+        <text class="dims-label">墙面</text>
+        <input class="dims-input" type="number" value="{{wallWidth}}" bindinput="onWallWidthInput" />
+        <text class="dims-label">×</text>
+        <input class="dims-input" type="number" value="{{wallHeight}}" bindinput="onWallHeightInput" />
+        <text class="dims-label">cm</text>
+        <view class="btn btn-small btn-primary" bindtap="onConfirmSpace">
+          <text>确认</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- ========== 已确认：布置模式 ========== -->
+  <block wx:if="{{spaceConfirmed}}">
+    <!-- 照片/墙面空间（40% 屏幕高度） -->
+    <view class="photo-area" style="padding-top: {{statusBarHeight + navBarHeight}}px;">
+      <view class="canvas-stack">
+        <canvas
+          type="2d"
+          id="pd2dCanvas"
+          class="pd2d-canvas"
+          bindtouchstart="onCanvasTouchStart"
+          bindtouchmove="onCanvasTouchMove"
+          bindtouchend="onCanvasTouchEnd"
+        ></canvas>
+        <canvas
+          type="webgl"
+          id="pd2dOverlay"
+          class="pd2d-overlay"
+          disable-scroll="true"
+        ></canvas>
       </view>
     </view>
 
-    <!-- 柜体类型行 -->
-    <view class="bar-row cabinet-row" wx:if="{{hasPhoto}}">
-      <view class="chip {{selectedType === 'a' ? 'chip-active' : ''}}" bindtap="selectType" data-type="a">
-        <text>A型</text>
+    <!-- 操作按钮：重设墙面 + 显示柜门 -->
+    <view class="action-row">
+      <view class="btn btn-outline" bindtap="resetWall">
+        <text>重设墙面</text>
       </view>
-      <view class="chip {{selectedType === 'b' ? 'chip-active' : ''}}" bindtap="selectType" data-type="b">
-        <text>B型</text>
-      </view>
-      <view class="chip {{selectedType === 'c' ? 'chip-active' : ''}}" bindtap="selectType" data-type="c">
-        <text>C型</text>
-      </view>
-      <view class="chip {{selectedType === 'd' ? 'chip-active' : ''}}" bindtap="selectType" data-type="d">
-        <text>D型</text>
+      <view class="btn btn-outline {{doorVisible ? 'btn-active' : ''}}" bindtap="toggleDoor">
+        <text>{{doorVisible ? '隐藏柜门' : '显示柜门'}}</text>
       </view>
     </view>
 
-    <!-- 宽度 + 放置行 -->
-    <view class="bar-row cabinet-row" wx:if="{{hasPhoto}}">
-      <view class="chip {{selectedWidth === 50 ? 'chip-active' : ''}}" bindtap="selectWidth" data-width="50">
-        <text>50cm</text>
+    <!-- 柜体积木框 -->
+    <view class="blocks-area">
+      <!-- 宽度选择 -->
+      <view class="blocks-width-row">
+        <text class="blocks-section-label">柜体宽度</text>
+        <view class="chip {{selectedWidth === 50 ? 'chip-active' : ''}}" bindtap="selectWidth" data-width="50">
+          <text>50cm</text>
+        </view>
+        <view class="chip {{selectedWidth === 100 ? 'chip-active' : ''}}" bindtap="selectWidth" data-width="100">
+          <text>100cm</text>
+        </view>
       </view>
-      <view class="chip {{selectedWidth === 100 ? 'chip-active' : ''}}" bindtap="selectWidth" data-width="100">
-        <text>100cm</text>
-      </view>
-      <view class="btn btn-place" bindtap="switchMode">
-        <text>{{mode === 'place' ? '点击照片放置 ' + selectedType.toUpperCase() + '型' + selectedWidth : '切换至摆放模式'}}</text>
+
+      <!-- 模型预览 -->
+      <canvas
+        type="webgl"
+        id="modelPreviewCanvas"
+        class="model-preview-canvas"
+        bindtouchstart="onModelPreviewTouch"
+      ></canvas>
+
+      <!-- 积木导航按钮 -->
+      <view class="blocks-nav-row">
+        <view class="btn btn-nav" bindtap="prevBlock">
+          <text>上一积木</text>
+        </view>
+        <view class="btn btn-nav btn-nav-primary" bindtap="nextBlock">
+          <text>{{isWallFull ? '确认布局' : '下一积木'}}</text>
+        </view>
       </view>
     </view>
-
-    <!-- 工具按钮行 -->
-    <view class="bar-row" wx:if="{{hasPhoto}}">
-      <view class="btn btn-small btn-outline" bindtap="resetCorners" wx:if="{{mode === 'corners'}}">
-        <text>重置角点</text>
-      </view>
-      <view class="btn btn-small btn-outline" bindtap="removeLastModule" wx:if="{{modules.length > 0}}">
-        <text>撤销柜体</text>
-      </view>
-    </view>
-  </view>
-
-  <!-- 空状态提示 -->
-  <view class="hint" wx:if="{{!hasPhoto}}">
-    <text>上传墙面照片 · 设置墙面尺寸 · 摆放柜体</text>
-  </view>
+  </block>
 </view>
