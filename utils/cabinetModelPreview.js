@@ -29,6 +29,25 @@ function createPreview(canvas) {
   var canvasHeight = 0;
   var dpr = 2;
   var doorVisible = false;
+  // Bumped on every init/setModels call. Per-cell load callbacks capture this
+  // and bail if a newer load has started, preventing stale promises from
+  // mutating the (now reset) models[] or firing the wrong onReady.
+  var loadGeneration = 0;
+
+  // Texture slots that may hang off a Material. Each is a THREE.Texture and
+  // owns GPU memory that must be explicitly disposed; calling material.dispose()
+  // alone leaks them.
+  var TEX_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap',
+    'emissiveMap', 'aoMap', 'bumpMap', 'alphaMap'];
+
+  function _disposeMaterial(mat) {
+    if (!mat) return;
+    for (var k = 0; k < TEX_SLOTS.length; k++) {
+      var tex = mat[TEX_SLOTS[k]];
+      if (tex && tex.dispose) tex.dispose();
+    }
+    mat.dispose();
+  }
 
   function _isDoorMesh(name) {
     if (!name) return false;
@@ -163,43 +182,10 @@ function createPreview(canvas) {
       return;
     }
 
-    var loaded = 0;
-    var total = cellCount;
-    var catalog = require('./cabinetCatalog.js');
-
-    for (var i = 0; i < cellCount; i++) {
-      (function(idx) {
-        var id = modelIds[idx];
-        var path = catalog.getModelPath(id);
-        if (!path) {
-          loaded++;
-          models[idx] = null;
-          if (loaded >= total && onReady) onReady(null, models);
-          return;
-        }
-        var data = _readGLB(path);
-        if (!data) {
-          loaded++;
-          models[idx] = null;
-          if (loaded >= total && onReady) onReady(null, models);
-          return;
-        }
-        _parseGLB(data).then(function(gltfScene) {
-          var group = _fitModelToCell(gltfScene);
-          group.userData.modelId = id;
-          group.userData.cellIndex = idx;
-          group.visible = false;
-          scene.add(group);
-          models[idx] = group;
-          loaded++;
-          if (loaded >= total && onReady) onReady(null, models);
-        }).catch(function() {
-          models[idx] = null;
-          loaded++;
-          if (loaded >= total && onReady) onReady(null, models);
-        });
-      })(i);
-    }
+    loadGeneration++;
+    var myGen = loadGeneration;
+    models = new Array(cellCount);
+    _loadModelsInternal(modelIds, myGen, onReady);
   }
 
   function setModels(modelIds, onReady) {
@@ -210,45 +196,22 @@ function createPreview(canvas) {
     _clearModels();
     cellCount = modelIds.length;
     selectedIndex = -1;
+    loadGeneration++;
+    var myGen = loadGeneration;
+    models = new Array(cellCount);
     if (cellCount === 0) {
       renderAll();
       if (onReady) onReady(null, []);
       return;
     }
-    var loaded = 0;
-    var total = cellCount;
-    var catalog = require('./cabinetCatalog.js');
-    for (var i = 0; i < cellCount; i++) {
-      (function(idx) {
-        var id = modelIds[idx];
-        var path = catalog.getModelPath(id);
-        if (!path) {
-          loaded++; models[idx] = null;
-          if (loaded >= total) { renderAll(); if (onReady) onReady(null, models); }
-          return;
-        }
-        var data = _readGLB(path);
-        if (!data) {
-          loaded++; models[idx] = null;
-          if (loaded >= total) { renderAll(); if (onReady) onReady(null, models); }
-          return;
-        }
-        _parseGLB(data).then(function(gltfScene) {
-          var group = _fitModelToCell(gltfScene);
-          group.userData.modelId = id;
-          group.userData.cellIndex = idx;
-          group.visible = false;
-          scene.add(group);
-          models[idx] = group;
-          loaded++;
-          if (loaded >= total) { renderAll(); if (onReady) onReady(null, models); }
-        }).catch(function() {
-          models[idx] = null;
-          loaded++;
-          if (loaded >= total) { renderAll(); if (onReady) onReady(null, models); }
-        });
-      })(i);
-    }
+    // Clear-canvas paint between disposing old models and the first new one
+    // so the cell doesn't show stale geometry while the new GLB is parsing.
+    renderAll();
+    _loadModelsInternal(modelIds, myGen, function(err, ms) {
+      if (myGen !== loadGeneration) return;
+      renderAll();
+      if (onReady) onReady(err, ms);
+    });
   }
 
   // 为指定 cell 构造与 glbSceneManager 等价的轨道相机：
@@ -378,9 +341,9 @@ function createPreview(canvas) {
           if (node.geometry) node.geometry.dispose();
           if (node.material) {
             if (Array.isArray(node.material)) {
-              node.material.forEach(function(m) { m.dispose(); });
+              node.material.forEach(_disposeMaterial);
             } else {
-              node.material.dispose();
+              _disposeMaterial(node.material);
             }
           }
         });
@@ -388,6 +351,56 @@ function createPreview(canvas) {
       }
     }
     models = [];
+  }
+
+  // Shared per-cell GLB loader used by both init and setModels. Each callback
+  // checks myGen against loadGeneration before mutating models[] or calling
+  // onReady, so a stale promise from a superseded load silently no-ops.
+  function _loadModelsInternal(modelIds, myGen, onReady) {
+    var catalog = require('./cabinetCatalog.js');
+    var total = modelIds.length;
+    if (total === 0) {
+      if (onReady) onReady(null, []);
+      return;
+    }
+    var loaded = 0;
+    for (var i = 0; i < total; i++) {
+      (function(idx) {
+        var id = modelIds[idx];
+        var path = catalog.getModelPath(id);
+        if (!path) {
+          if (myGen !== loadGeneration) return;
+          loaded++;
+          models[idx] = null;
+          if (loaded >= total && onReady) onReady(null, models);
+          return;
+        }
+        var data = _readGLB(path);
+        if (!data) {
+          if (myGen !== loadGeneration) return;
+          loaded++;
+          models[idx] = null;
+          if (loaded >= total && onReady) onReady(null, models);
+          return;
+        }
+        _parseGLB(data).then(function(gltfScene) {
+          if (myGen !== loadGeneration) return;
+          var group = _fitModelToCell(gltfScene);
+          group.userData.modelId = id;
+          group.userData.cellIndex = idx;
+          group.visible = false;
+          scene.add(group);
+          models[idx] = group;
+          loaded++;
+          if (loaded >= total && onReady) onReady(null, models);
+        }).catch(function() {
+          if (myGen !== loadGeneration) return;
+          models[idx] = null;
+          loaded++;
+          if (loaded >= total && onReady) onReady(null, models);
+        });
+      })(i);
+    }
   }
 
   function dispose() {
