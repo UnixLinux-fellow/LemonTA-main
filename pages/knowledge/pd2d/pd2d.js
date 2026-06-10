@@ -2,6 +2,10 @@ var perspective = require('../../../utils/perspective.js');
 var cabinetCatalog = require('../../../utils/cabinetCatalog.js');
 var cabinetModelPreview = require('../../../utils/cabinetModelPreview.js');
 var cabinetSceneOverlay = require('../../../utils/cabinetSceneOverlay.js');
+var photoFit = require('../../../utils/photoFit.js');
+
+var PHOTO_MIN_VH = 0.20;
+var PHOTO_MAX_VH = 0.42;
 
 Page({
   _canvas: null,
@@ -20,6 +24,7 @@ Page({
     canvasReady: false,
     canvasWidth: 360,
     canvasHeight: 300,
+    photoAreaHeight: 0,
     hasPhoto: false,
     corners: [
       { x: 0, y: 0 },
@@ -39,6 +44,9 @@ Page({
     selectedWidth: 50,
     selectedModelId: '50A',
     modelPreviewReady: false,
+    previewCanvasWidth: 360,
+    scrollIndicatorWidth: 0,
+    scrollIndicatorLeft: 0,
     hasDoor: false
   },
 
@@ -48,9 +56,17 @@ Page({
       var menuBtn = wx.getMenuButtonBoundingClientRect();
       var statusBarHeight = sysInfo.statusBarHeight || 20;
       var navBarHeight = (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
-      this.setData({ statusBarHeight: statusBarHeight, navBarHeight: navBarHeight });
+      this._screenW = sysInfo.windowWidth || 375;
+      this._screenH = sysInfo.windowHeight || 667;
+      this.setData({
+        statusBarHeight: statusBarHeight,
+        navBarHeight: navBarHeight,
+        photoAreaHeight: this._screenH * 0.40
+      });
     } catch (e) {
-      this.setData({ statusBarHeight: 20, navBarHeight: 44 });
+      this._screenW = 375;
+      this._screenH = 667;
+      this.setData({ statusBarHeight: 20, navBarHeight: 44, photoAreaHeight: 267 });
     }
   },
 
@@ -160,10 +176,17 @@ Page({
       wx.showToast({ title: '墙高需在232-400cm', icon: 'none' });
       return;
     }
+    var areaH = this._photoImg
+      ? this.data.photoAreaHeight
+      : photoFit.computePhotoAreaHeight(
+          w, h, this._screenW || 375, this._screenH || 667,
+          PHOTO_MIN_VH, PHOTO_MAX_VH
+        );
     this.setData({
       spaceName: name, wallWidth: w, wallHeight: h,
       spaceConfirmed: true, modules: [],
-      isWallFull: false, doorVisible: false
+      isWallFull: false, doorVisible: false,
+      photoAreaHeight: areaH
     });
     // wx:if 切换会重建 canvas，延迟重新初始化
     var self = this;
@@ -204,8 +227,23 @@ Page({
     var img = self._canvas.createImage();
     img.onload = function() {
       self._photoImg = img;
-      self.setData({ hasPhoto: true, modules: [], spaceConfirmed: false });
-      self._drawFrame();
+      var natW = img.width || 1;
+      var natH = img.height || 1;
+      var areaH = photoFit.computePhotoAreaHeight(
+        natW, natH, self._screenW || 375, self._screenH || 667,
+        PHOTO_MIN_VH, PHOTO_MAX_VH
+      );
+      self.setData({
+        hasPhoto: true,
+        modules: [],
+        spaceConfirmed: false,
+        photoAreaHeight: areaH
+      });
+      self._canvas = null;
+      self._ctx = null;
+      setTimeout(function() {
+        self.initCanvas();
+      }, 60);
     };
     img.onerror = function() {
       wx.showToast({ title: '照片加载失败', icon: 'none' });
@@ -333,19 +371,27 @@ Page({
     var self = this;
     var widthCm = self.data.selectedWidth;
     var modelIds = self._getModelIdsForWidth(widthCm);
+    console.log('[pd2d] _initModelPreview widthCm=', widthCm, 'modelIds=', modelIds, 'hasPreview=', !!self._modelPreview);
     if (modelIds.length === 0) return;
 
+    var CELL_PX = 130;
+    var canvasW = modelIds.length * CELL_PX;
+
     if (self._modelPreview) {
+      // Same cell count for 50/100cm (both 6 models) → reuse renderer.
+      self.setData({ previewCanvasWidth: canvasW });
       self._modelPreview.setModels(modelIds, function(err) {
         if (err) { console.error('[pd2d] setModels error:', err); return; }
         try { self._modelPreview.setDoorVisible(self.data.doorVisible); } catch (e) {}
         self._modelPreview.selectModel(0);
         self._modelPreview.renderAll();
         self._syncSelectedFromPreview(0);
+        self._initScrollIndicator();
       });
       return;
     }
 
+    self.setData({ previewCanvasWidth: canvasW });
     setTimeout(function() {
       var query = wx.createSelectorQuery().in(self);
       query.select('#modelPreviewCanvas')
@@ -368,6 +414,7 @@ Page({
             preview.selectModel(0);
             preview.renderAll();
             self._syncSelectedFromPreview(0);
+            self._initScrollIndicator();
           });
         });
     }, 200);
@@ -463,6 +510,56 @@ Page({
     this._syncSelectedFromPreview(idx);
   },
 
+  onPreviewScroll: function(e) {
+    var d = e.detail;
+    var contentW = d.scrollWidth || this.data.previewCanvasWidth || 1;
+    var viewW = this._previewViewportWidth || (this._screenW || 360);
+    if (contentW <= viewW) {
+      if (this.data.scrollIndicatorWidth !== 0) {
+        this.setData({ scrollIndicatorWidth: 0, scrollIndicatorLeft: 0 });
+      }
+      return;
+    }
+    var thumbPct = Math.max(15, (viewW / contentW) * 100);
+    var maxLeft = 100 - thumbPct;
+    var leftPct = (d.scrollLeft / (contentW - viewW)) * maxLeft;
+    if (leftPct < 0) leftPct = 0;
+    if (leftPct > maxLeft) leftPct = maxLeft;
+    this.setData({
+      scrollIndicatorWidth: thumbPct,
+      scrollIndicatorLeft: leftPct
+    });
+  },
+
+  _measurePreviewViewport: function(cb) {
+    var self = this;
+    wx.createSelectorQuery().in(self)
+      .select('.preview-scroll')
+      .boundingClientRect(function(rect) {
+        if (rect && rect.width > 0) {
+          self._previewViewportWidth = rect.width;
+        }
+        if (cb) cb();
+      })
+      .exec();
+  },
+
+  _initScrollIndicator: function() {
+    var self = this;
+    self._measurePreviewViewport(function() {
+      var contentW = self.data.previewCanvasWidth || 1;
+      var viewW = self._previewViewportWidth || (self._screenW || 360);
+      if (contentW <= viewW) {
+        self.setData({ scrollIndicatorWidth: 0, scrollIndicatorLeft: 0 });
+      } else {
+        self.setData({
+          scrollIndicatorWidth: Math.max(15, (viewW / contentW) * 100),
+          scrollIndicatorLeft: 0
+        });
+      }
+    });
+  },
+
   // ========== 触摸处理（角点拖拽） ==========
 
   onCanvasTouchStart(e) {
@@ -542,7 +639,12 @@ Page({
     ctx.fillRect(0, 0, cw, ch);
 
     if (this._photoImg) {
-      ctx.drawImage(this._photoImg, 0, 0, cw, ch);
+      var rect = photoFit.computeContainRect(
+        this._photoImg.width || 1,
+        this._photoImg.height || 1,
+        cw, ch
+      );
+      ctx.drawImage(this._photoImg, rect.x, rect.y, rect.w, rect.h);
     } else if (data.spaceConfirmed) {
       var margin = 24;
       var wallX = margin;

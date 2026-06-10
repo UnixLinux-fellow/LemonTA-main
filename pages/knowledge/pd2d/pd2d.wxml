@@ -46,8 +46,8 @@
 
   <!-- ========== 已确认：布置模式 ========== -->
   <block wx:if="{{spaceConfirmed}}">
-    <!-- 照片/墙面空间（40% 屏幕高度） -->
-    <view class="photo-area" style="padding-top: {{statusBarHeight + navBarHeight}}px;">
+    <!-- 照片/墙面空间（高度随照片宽高比自适应，clamp 到 25-60vh） -->
+    <view class="photo-area" style="padding-top: {{statusBarHeight + navBarHeight}}px; height: {{photoAreaHeight + statusBarHeight + navBarHeight}}px;">
       <view class="canvas-stack">
         <canvas
           type="2d"
@@ -89,13 +89,30 @@
         </view>
       </view>
 
-      <!-- 模型预览 -->
-      <canvas
-        type="webgl"
-        id="modelPreviewCanvas"
-        class="model-preview-canvas"
-        bindtouchstart="onModelPreviewTouch"
-      ></canvas>
+      <!-- 模型预览（水平滚动） -->
+      <scroll-view
+        class="preview-scroll"
+        scroll-x="true"
+        enhanced="true"
+        show-scrollbar="false"
+        bindscroll="onPreviewScroll"
+      >
+        <view class="preview-track" style="width: {{previewCanvasWidth}}px;">
+          <canvas
+            type="webgl"
+            id="modelPreviewCanvas"
+            class="model-preview-canvas"
+            style="width: {{previewCanvasWidth}}px;"
+            bindtouchstart="onModelPreviewTouch"
+          ></canvas>
+        </view>
+      </scroll-view>
+
+      <!-- 自定义滚动进度条 -->
+      <view class="scroll-indicator" wx:if="{{scrollIndicatorWidth > 0}}">
+        <view class="scroll-indicator-thumb"
+          style="width: {{scrollIndicatorWidth}}%; left: {{scrollIndicatorLeft}}%;"></view>
+      </view>
 
       <!-- 积木导航按钮 -->
       <view class="blocks-nav-row">
