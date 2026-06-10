@@ -29,6 +29,9 @@ function createPreview(canvas) {
   var canvasHeight = 0;
   var dpr = 2;
   var doorVisible = false;
+  // Cached batch radius: all cells share this so 50cm and 100cm cabinets render
+  // at the same on-screen scale. Recomputed after every successful batch load.
+  var batchRadius = 0;
   // Bumped on every init/setModels call. Per-cell load callbacks capture this
   // and bail if a newer load has started, preventing stale promises from
   // mutating the (now reset) models[] or firing the wrong onReady.
@@ -185,10 +188,15 @@ function createPreview(canvas) {
     loadGeneration++;
     var myGen = loadGeneration;
     models = new Array(cellCount);
-    _loadModelsInternal(modelIds, myGen, onReady);
+    _loadModelsInternal(modelIds, myGen, function(err, ms) {
+      if (myGen !== loadGeneration) return;
+      _recomputeBatchRadius();
+      if (onReady) onReady(err, ms);
+    });
   }
 
   function setModels(modelIds, onReady) {
+    console.log('[preview] setModels in:', modelIds, 'cellCount=', cellCount, 'canvasSize=', canvasWidth, 'x', canvasHeight);
     if (!scene || !renderer) {
       if (onReady) onReady(new Error('preview not initialized'));
       return;
@@ -209,22 +217,31 @@ function createPreview(canvas) {
     renderAll();
     _loadModelsInternal(modelIds, myGen, function(err, ms) {
       if (myGen !== loadGeneration) return;
+      _recomputeBatchRadius();
+      console.log('[preview] setModels loaded:', modelIds, 'batchRadius=', batchRadius,
+        'sizes=', (ms || []).map(function(m) {
+          return m && m.userData ? m.userData.modelId + ':' + JSON.stringify(m.userData.size) : 'null';
+        }));
       renderAll();
       if (onReady) onReady(err, ms);
     });
   }
 
   // 为指定 cell 构造与 glbSceneManager 等价的轨道相机：
-  //   theta=π, phi=π/24, radius=maxDim*2.5, target=(0, -size.y*0.25, 0)
-  function _makeCellCamera(cellW, cellH, modelSize) {
+  //   theta=π, phi=π/24, target=(0, -size.y*0.25, 0)
+  // radius 由外部传入（batchRadius，所有 cell 共享），保证不同尺寸柜体在屏幕上视觉一致。
+  function _makeCellCamera(cellW, cellH, modelSize, radius) {
     var size = modelSize || { x: 1, y: 1, z: 1 };
-    var maxDim = Math.max(size.x, size.y, size.z, 0.01);
+    var fov = 45;
 
-    var radius = maxDim * 2.5;
     var theta = Math.PI;
-    var phi = Math.PI / 24;
+    // phi=π/12 (15° 仰角): 温和俯视，柜顶可见但不显得过度俯视。
+    // targetY=0: 相机看向模型中心。glbSceneManager 用 -size.y*0.25 是因为
+    // 它在主预览界面 phi 可拖拽调整；缩略图固定姿态下偏移会让柜顶超出
+    // fillFraction 留出的视野上沿。
+    var phi = Math.PI / 12;
     var targetX = 0;
-    var targetY = -size.y * 0.25;
+    var targetY = 0;
     var targetZ = 0;
 
     var sp = Math.sin(phi);
@@ -233,7 +250,7 @@ function createPreview(canvas) {
     var ct = Math.cos(theta);
 
     var camera = new THREE.PerspectiveCamera(
-      45,
+      fov,
       cellW / Math.max(cellH, 1),
       Math.max(0.01, radius * 0.05),
       Math.max(50, radius * 10)
@@ -245,6 +262,19 @@ function createPreview(canvas) {
     );
     camera.lookAt(targetX, targetY, targetZ);
     return camera;
+  }
+
+  function _recomputeBatchRadius() {
+    var fit = require('./cellCameraFit.js');
+    var sizes = [];
+    for (var i = 0; i < models.length; i++) {
+      if (models[i] && models[i].userData && models[i].userData.size) {
+        sizes.push(models[i].userData.size);
+      }
+    }
+    var cellW = Math.floor(canvasWidth / Math.max(cellCount, 1));
+    var cellH = canvasHeight;
+    batchRadius = fit.computeBatchCameraRadius(sizes, cellW, cellH, 45, 0.7);
   }
 
   function _renderCell(index, highlight) {
@@ -269,18 +299,21 @@ function createPreview(canvas) {
       return;
     }
 
-    var camera = _makeCellCamera(cellW, cellH, group.userData.size);
+    var camera = _makeCellCamera(cellW, cellH, group.userData.size, batchRadius);
     renderer.render(scene, camera);
   }
 
   function renderAll() {
     if (!renderer || !scene) return;
+    var dbg = [];
     for (var i = 0; i < cellCount; i++) {
       var group = models[i];
       if (group) group.visible = true;
       _renderCell(i, i === selectedIndex);
+      dbg.push(i + ':' + (group ? (group.userData.modelId + (group.visible ? '✓' : '✗')) : 'null'));
       if (group) group.visible = false;
     }
+    console.log('[preview] renderAll cells:', dbg.join(' '), 'batchRadius=', batchRadius);
   }
 
   function selectModel(index) {
