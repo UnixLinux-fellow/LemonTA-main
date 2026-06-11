@@ -47,7 +47,67 @@ Page({
     previewCanvasWidth: 360,
     scrollIndicatorWidth: 0,
     scrollIndicatorLeft: 0,
-    hasDoor: false
+    hasDoor: false,
+    canPlace50: true,
+    canPlace100: true
+  },
+
+  _computeTrailing: function() {
+    var SK = 2;
+    var used = SK * 2;
+    var modules = this.data.modules || [];
+    for (var i = 0; i < modules.length; i++) used += modules[i].width;
+    return this.data.wallWidth - used;
+  },
+
+  _hasAutoFilled: function() {
+    var modules = this.data.modules || [];
+    for (var i = 0; i < modules.length; i++) {
+      if (modules[i].autoFilled) return true;
+    }
+    return false;
+  },
+
+  _refreshPlacementUI: function() {
+    var trailing = this._computeTrailing();
+    var canPlace50 = false, canPlace100 = false;
+    if (!this._hasAutoFilled()) {
+      if (trailing > 150) { canPlace50 = true; canPlace100 = true; }
+      else if (trailing > 100) { canPlace50 = true; }
+    }
+    var isWallFull = this._hasAutoFilled() || (trailing <= 100);
+    this.setData({
+      canPlace50: canPlace50,
+      canPlace100: canPlace100,
+      isWallFull: isWallFull
+    });
+  },
+
+  _maybeAutoFillTrailing: function() {
+    if (this._hasAutoFilled()) return false;
+    var trailing = this._computeTrailing();
+    if (trailing < 30 || trailing > 100) return false;
+    var SK = 2;
+    var modules = (this.data.modules || []).slice();
+    var rightmostEnd = SK;
+    for (var i = 0; i < modules.length; i++) {
+      var endX = modules[i].wallX + modules[i].width;
+      if (endX > rightmostEnd) rightmostEnd = endX;
+    }
+    var fillerWidth = trailing - 4;
+    if (fillerWidth <= 0) return false;
+    modules.push({
+      type: 'a',
+      width: fillerWidth,
+      wallX: rightmostEnd,
+      isStandard: false,
+      autoFilled: true
+    });
+    modules.sort(function(a, b) { return a.wallX - b.wallX; });
+    this.setData({ modules: modules });
+    this._drawFrame();
+    this._scheduleOverlayUpdate();
+    return true;
   },
 
   onLoad() {
@@ -199,6 +259,9 @@ Page({
       isWallFull: false, doorVisible: false,
       photoAreaHeight: areaH
     });
+    this._refreshPlacementUI();
+    this._maybeAutoFillTrailing();
+    this._refreshPlacementUI();
     var self = this;
     self._canvas = null;
     self._ctx = null;
@@ -296,6 +359,14 @@ Page({
 
   selectWidth(e) {
     var w = parseInt(e.currentTarget.dataset.width, 10);
+    if (w === 100 && !this.data.canPlace100) {
+      wx.showToast({ title: '剩余墙宽不足，无法放100cm柜', icon: 'none' });
+      return;
+    }
+    if (w === 50 && !this.data.canPlace50) {
+      wx.showToast({ title: '墙面已满', icon: 'none' });
+      return;
+    }
     this.setData({ selectedWidth: w });
     this._recomputeIsWallFull();
     this._initModelPreview();
@@ -308,11 +379,15 @@ Page({
       wx.showToast({ title: '已无柜体', icon: 'none' });
       return;
     }
-    var modules = this.data.modules.slice(0, -1);
+    var modules = this.data.modules.slice();
+    while (modules.length > 0 && modules[modules.length - 1].autoFilled) {
+      modules.pop();
+    }
+    if (modules.length > 0) modules.pop();
     this.setData({ modules: modules, isWallFull: false });
     this._drawFrame();
     this._scheduleOverlayUpdate();
-    this._recomputeIsWallFull();
+    this._refreshPlacementUI();
   },
 
   nextBlock() {
@@ -320,24 +395,44 @@ Page({
       this._confirmLayout();
       return;
     }
+    var trailing = this._computeTrailing();
+    var sw = this.data.selectedWidth;
+    if (trailing > 150) {
+      // 正常路径
+    } else if (trailing > 100) {
+      if (sw !== 50) {
+        wx.showToast({ title: '剩余空间仅可放50cm柜', icon: 'none' });
+        return;
+      }
+    } else {
+      // trailing ≤ 100：禁止放置，触发自动补
+      if (this._maybeAutoFillTrailing()) {
+        this._refreshPlacementUI();
+      } else {
+        this.setData({ isWallFull: true });
+      }
+      return;
+    }
     var wallX = this._findNextWallPosition();
     if (wallX < 0) {
-      wx.showToast({ title: '墙面已满', icon: 'none' });
-      this.setData({ isWallFull: true });
+      this._maybeAutoFillTrailing();
+      this._refreshPlacementUI();
       return;
     }
     this._placeModule(wallX);
-    this._recomputeIsWallFull();
+    // 放置后重新计算并按需自动补
+    this._maybeAutoFillTrailing();
+    this._refreshPlacementUI();
   },
 
   resetWall() {
-    // 重置角点 + 清空模块
     this.setData({ modules: [], isWallFull: false, draggingCorner: -1 });
     if (this._photoImg) {
       this._initDefaultCorners();
     }
     this._drawFrame();
     this._scheduleOverlayUpdate();
+    this._refreshPlacementUI();
   },
 
   toggleDoor() {
@@ -369,14 +464,7 @@ Page({
   },
 
   _recomputeIsWallFull() {
-    var skW = 2;
-    var usedWidth = skW * 2;
-    var modules = this.data.modules;
-    for (var i = 0; i < modules.length; i++) {
-      usedWidth += modules[i].width;
-    }
-    var remaining = this.data.wallWidth - usedWidth;
-    this.setData({ isWallFull: remaining < this.data.selectedWidth });
+    this._refreshPlacementUI();
   },
 
   _confirmLayout() {
