@@ -1,0 +1,136 @@
+<!--pages/knowledge/pd2d/pd2d.wxml-->
+<view class="page">
+  <!-- 导航栏 -->
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <text class="nav-back-icon">‹</text>
+      </view>
+      <text class="nav-title">{{spaceConfirmed ? spaceName : 'PD2D'}}</text>
+    </view>
+  </view>
+
+  <!-- ========== 未确认：上传 + 配置 ========== -->
+  <block wx:if="{{!spaceConfirmed}}">
+    <view class="canvas-wrapper" style="padding-top: {{statusBarHeight + navBarHeight}}px;">
+      <canvas
+        type="2d"
+        id="pd2dCanvas"
+        class="pd2d-canvas"
+        style="width: {{canvasWidth}}px; height: {{canvasHeight}}px;"
+      ></canvas>
+    </view>
+
+    <view class="upload-trigger" wx:if="{{!hasPhoto}}" bindtap="choosePhoto">
+      <view class="upload-icon-circle">
+        <text class="upload-icon-text">+</text>
+      </view>
+      <text class="upload-text">点击上传墙面照片</text>
+    </view>
+
+    <view class="bottom-bar">
+      <view class="bar-row dims-row">
+        <text class="dims-label">空间名称</text>
+        <input class="name-input" type="text" value="{{spaceName}}" bindinput="onSpaceNameInput" placeholder="空间名称" maxlength="20" />
+        <text class="dims-unit"></text>
+      </view>
+      <view class="bar-row dims-row">
+        <text class="dims-label">墙面宽度</text>
+        <input class="dims-input" type="number" value="{{wallWidth}}" bindinput="onWallWidthInput" />
+        <text class="dims-unit">cm</text>
+      </view>
+      <view class="bar-row dims-row">
+        <text class="dims-label">墙面高度</text>
+        <input class="dims-input" type="number" value="{{wallHeight}}" bindinput="onWallHeightInput" />
+        <text class="dims-unit">cm</text>
+      </view>
+      <view class="bar-row">
+        <view class="btn btn-confirm btn-primary" bindtap="onConfirmSpace">
+          <text>确认</text>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <!-- ========== 已确认：布置模式 ========== -->
+  <block wx:if="{{spaceConfirmed}}">
+    <!-- 照片/墙面空间（高度随照片宽高比自适应，clamp 到 25-60vh） -->
+    <view class="photo-area" style="padding-top: {{statusBarHeight + navBarHeight}}px; height: {{photoAreaHeight + statusBarHeight + navBarHeight}}px;">
+      <view class="canvas-stack">
+        <canvas
+          type="2d"
+          id="pd2dCanvas"
+          class="pd2d-canvas"
+          bindtouchstart="onCanvasTouchStart"
+          bindtouchmove="onCanvasTouchMove"
+          bindtouchend="onCanvasTouchEnd"
+        ></canvas>
+        <canvas
+          type="webgl"
+          id="pd2dOverlay"
+          class="pd2d-overlay"
+          disable-scroll="true"
+        ></canvas>
+      </view>
+    </view>
+
+    <!-- 操作按钮：重设墙面 + 显示柜门 -->
+    <view class="action-row">
+      <view class="btn btn-outline" bindtap="resetWall">
+        <text>重设墙面</text>
+      </view>
+      <view class="btn btn-outline {{doorVisible ? 'btn-active' : ''}}" bindtap="toggleDoor">
+        <text>{{doorVisible ? '隐藏柜门' : '显示柜门'}}</text>
+      </view>
+    </view>
+
+    <!-- 柜体积木框 -->
+    <view class="blocks-area">
+      <!-- 宽度选择 -->
+      <view class="blocks-width-row">
+        <text class="blocks-section-label">柜体宽度</text>
+        <view class="chip {{selectedWidth === 50 ? 'chip-active' : ''}} {{!canPlace50 ? 'chip-disabled' : ''}}" bindtap="selectWidth" data-width="50">
+          <text>50cm</text>
+        </view>
+        <view class="chip {{selectedWidth === 100 ? 'chip-active' : ''}} {{!canPlace100 ? 'chip-disabled' : ''}}" bindtap="selectWidth" data-width="100">
+          <text>100cm</text>
+        </view>
+      </view>
+
+      <!-- 模型预览（水平滚动） -->
+      <scroll-view
+        class="preview-scroll"
+        scroll-x="true"
+        enhanced="true"
+        show-scrollbar="false"
+        bindscroll="onPreviewScroll"
+      >
+        <view class="preview-track" style="width: {{previewCanvasWidth}}px;">
+          <canvas
+            type="webgl"
+            id="modelPreviewCanvas"
+            class="model-preview-canvas"
+            style="width: {{previewCanvasWidth}}px;"
+            bindtouchstart="onModelPreviewTouch"
+          ></canvas>
+        </view>
+      </scroll-view>
+
+      <!-- 自定义滚动进度条 -->
+      <view class="scroll-indicator" wx:if="{{scrollIndicatorWidth > 0}}">
+        <view class="scroll-indicator-thumb"
+          style="width: {{scrollIndicatorWidth}}%; left: {{scrollIndicatorLeft}}%;"></view>
+      </view>
+
+      <!-- 积木导航按钮 -->
+      <view class="blocks-nav-row">
+        <view class="btn btn-nav" bindtap="prevBlock">
+          <text>上一积木</text>
+        </view>
+        <view class="btn btn-nav btn-nav-primary" bindtap="nextBlock">
+          <text>{{isWallFull ? '保存方案' : '下一积木'}}</text>
+        </view>
+      </view>
+    </view>
+  </block>
+</view>

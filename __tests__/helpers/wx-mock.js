@@ -25,6 +25,21 @@ global.wx = {
     storage.clear();
   }),
 
+  // 文件保存 / 删除
+  saveFile: jest.fn(function (opts) {
+    var savedPath = 'wxfile://saved_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    if (opts && opts.success) {
+      opts.success({ savedFilePath: savedPath });
+    }
+    return savedPath;
+  }),
+
+  removeSavedFile: jest.fn(function (opts) {
+    if (opts && opts.success) {
+      opts.success({});
+    }
+  }),
+
   // 系统信息
   getWindowInfo: jest.fn(function () {
     return { statusBarHeight: 44, windowHeight: 800, windowWidth: 375 };

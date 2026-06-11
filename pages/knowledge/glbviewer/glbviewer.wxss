@@ -71,6 +71,28 @@
   font-weight: 500;
 }
 
+.nav-door {
+  margin-left: auto;
+  margin-right: 12rpx;
+  padding: 12rpx 24rpx;
+  border-radius: 16rpx;
+  background: #4CD964;
+}
+
+.nav-door + .nav-clear {
+  margin-left: 0;
+}
+
+.nav-door:active {
+  opacity: 0.8;
+}
+
+.nav-door-text {
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: 600;
+}
+
 /* ===== 3D 视口 ===== */
 .viewport {
   position: fixed;
@@ -83,7 +105,7 @@
 /* ===== WebGL Canvas ===== */
 .glb-canvas {
   width: 100%;
-  height: 100%;
+  height: calc(100% - 380rpx);
 }
 
 /* ===== 居中覆盖层（空状态 / 加载 / 错误共用容器） ===== */
@@ -929,6 +951,28 @@
   background: rgba(252, 151, 0, 0.18);
   color: #FC9700;
   font-weight: 600;
+}
+
+.door-toggle-row {
+  display: flex;
+  justify-content: center;
+  margin: 0 32rpx 16rpx;
+}
+
+.door-toggle-btn {
+  padding: 14rpx 40rpx;
+  border-radius: 24rpx;
+  border: 2rpx solid #4CD964;
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 600;
+  background: #4CD964;
+  box-shadow: 0 2rpx 12rpx rgba(76, 217, 100, 0.4);
+}
+
+.door-toggle-btn:active {
+  background: #3FB754;
+  border-color: #3FB754;
 }
 
 .scale-sliders {

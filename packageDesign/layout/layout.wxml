@@ -18,9 +18,12 @@
     
     <!-- 预览区域 - Canvas 3D效果 -->
     <view class="preview-area" wx:if="{{!showSaveModal && !showResetModal}}">
-      <canvas type="2d" 
+      <canvas type="2d"
               id="previewCanvas"
-              class="preview-canvas"></canvas>
+              class="preview-canvas"
+              bindtouchstart="onCanvasTouchStart"
+              bindtouchmove="onCanvasTouchMove"
+              bindtouchend="onCanvasTouchEnd"></canvas>
     </view>
     <!-- 弹窗出现时用静态截图替代Canvas -->
     <view class="preview-area" wx:if="{{showSaveModal || showResetModal}}">
@@ -34,6 +37,15 @@
     <view class="action-row">
       <view class="action-btn" bindtap="resetWall">重设墙面</view>
       <view class="action-btn {{showDoor ? 'active' : ''}}" bindtap="toggleDoor">显示柜门</view>
+    </view>
+
+    <!-- 照片模式按钮行 -->
+    <view class="photo-actions" wx:if="{{!photoMode}}">
+      <view class="photo-btn" bindtap="choosePhoto">📷 上传实拍照片</view>
+    </view>
+    <view class="photo-actions" wx:if="{{photoMode}}">
+      <view class="photo-btn remove" bindtap="removePhoto">✕ 移除照片</view>
+      <text class="photo-hint">拖拽橙色角标对准墙面四角</text>
     </view>
 
     <!-- 框架编辑器卡片 -->

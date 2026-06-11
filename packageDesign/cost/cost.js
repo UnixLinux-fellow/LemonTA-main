@@ -650,6 +650,13 @@ function calcTotalCost(design, config) {
   var lighting = config.lighting || '无';
 
   var modules = design.modules || [];
+  // autoFilled 模块（trailing gap-fill）实际 width 小于 100，但按 100 系列标准件计价
+  var modulesForCost = modules.map(function(m) {
+    if (m && m.autoFilled) {
+      return Object.assign({}, m, { width: 100 });
+    }
+    return m;
+  });
   var cornerType = design.cornerType || 'WZJ';
   var wallHeight = design.wallHeight || 260;
   var gapH = wallHeight - 230 - 2;
@@ -693,8 +700,8 @@ function calcTotalCost(design, config) {
   }
 
   // === 标准/非标模块 ===
-  for (var i = 0; i < modules.length; i++) {
-    var mod = modules[i];
+  for (var i = 0; i < modulesForCost.length; i++) {
+    var mod = modulesForCost[i];
     // 补充高度默认值
     if (!mod.height) mod.height = 230;
 
@@ -874,7 +881,8 @@ Page({
     }
 
     // 兼容：?id=<_id>（云数据库方案，推荐）；?index=<数字> 老的数组下标（保留兜底）
-    var designId = options.id;
+    // 调用方用 encodeURIComponent 编码过 id（pd2dList 桥接 id 含冒号），这里必须解码
+    var designId = options.id ? decodeURIComponent(options.id) : '';
     var designIndex = options.index !== undefined ? parseInt(options.index) : -1;
 
     var self = this;

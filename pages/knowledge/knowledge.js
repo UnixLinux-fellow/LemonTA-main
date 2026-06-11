@@ -87,6 +87,14 @@ Page({
       return;
     }
 
+    // PD2D 透视投影：先进列表页（开始新设计 / 打开已保存方案）
+    if (type === 'pd2d') {
+      wx.navigateTo({
+        url: '/pages/knowledge/pd2dList/pd2dList'
+      });
+      return;
+    }
+
     // 图片类型：预览大图（带缓存）
     if (type === 'image') {
       var imageUrl = dataset.imageurl || dataset.imageUrl;

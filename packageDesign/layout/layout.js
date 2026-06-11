@@ -1,6 +1,7 @@
 var app = getApp();
 var assets = require('../../utils/assets.js');
 var layoutCompute = require('../../utils/layoutCompute.js');
+var perspective = require('../../utils/perspective.js');
 
 // ====== 性能优化：日志开关 ======
 // 生产环境关闭调试日志；需排查问题时临时改为 true 即可。
@@ -55,6 +56,17 @@ Page({
     canvasHeight: 300,
     previewImagePath: '',  // Canvas截图路径（弹窗时用图片替代Canvas避免遮挡）
 
+    // 照片透视模式
+    photoMode: false,
+    photoPath: '',
+    photoCorners: [
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+      { x: 0, y: 0 },
+      { x: 0, y: 0 }
+    ],
+    draggingCorner: -1,
+
     // 导航栏
     statusBarHeight: 20,
     navBarHeight: 44
@@ -62,6 +74,7 @@ Page({
 
   // 图片缓存
   _imageCache: {},
+  _photoImg: null,
   _canvas: null,
   _ctx: null,
   _canvasRetry: 0,
@@ -136,6 +149,142 @@ Page({
     if (this._hasEverReady) {
       log('[Canvas] onShow 触发（返回场景），重新初始化 Canvas 并重绘');
       this._reinitCanvasAfterModal();
+    }
+  },
+
+  /**
+   * 选择照片（拍照或相册）
+   */
+  choosePhoto() {
+    var self = this;
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: function(res) {
+        var tempPath = res.tempFilePaths[0];
+        if (!tempPath) return;
+        self._loadPhotoToCanvas(tempPath);
+      },
+      fail: function(err) {
+        if (err && err.errMsg && err.errMsg.indexOf('cancel') === -1) {
+          wx.showToast({ title: '选择照片失败', icon: 'none' });
+        }
+      }
+    });
+  },
+
+  /**
+   * 将照片加载到 Canvas Image 对象中
+   */
+  _loadPhotoToCanvas(tempPath) {
+    var self = this;
+    if (!self._canvas) {
+      wx.showToast({ title: 'Canvas 未就绪，请稍后重试', icon: 'none' });
+      return;
+    }
+    var img = self._canvas.createImage();
+    img.onload = function() {
+      self._photoImg = img;
+      self._initDefaultCorners();
+      self.setData({
+        photoMode: true,
+        photoPath: tempPath
+      });
+      self._scheduleDraw();
+    };
+    img.onerror = function() {
+      wx.showToast({ title: '照片加载失败', icon: 'none' });
+    };
+    img.src = tempPath;
+  },
+
+  /**
+   * 初始化默认角点：Canvas 区域向内缩进 20%
+   */
+  _initDefaultCorners() {
+    var cw = this.data.canvasWidth;
+    var ch = this.data.canvasHeight;
+    this.setData({
+      photoCorners: [
+        { x: cw * 0.2, y: ch * 0.2 },
+        { x: cw * 0.8, y: ch * 0.2 },
+        { x: cw * 0.8, y: ch * 0.8 },
+        { x: cw * 0.2, y: ch * 0.8 }
+      ]
+    });
+  },
+
+  /**
+   * 移除照片，回到抽象 3D 视图
+   */
+  removePhoto() {
+    this._photoImg = null;
+    this.setData({
+      photoMode: false,
+      photoPath: '',
+      draggingCorner: -1
+    });
+    this._scheduleDraw();
+  },
+
+  /**
+   * Canvas touchstart — 检测是否命中角标
+   */
+  onCanvasTouchStart(e) {
+    if (!this.data.photoMode) return;
+    var touches = e.touches;
+    if (!touches || touches.length === 0) return;
+
+    var touch = touches[0];
+    var corners = this.data.photoCorners;
+    var hitRadius = 20;
+    var hitIndex = -1;
+    var minDist = Infinity;
+
+    for (var i = 0; i < 4; i++) {
+      var dx = touch.x - corners[i].x;
+      var dy = touch.y - corners[i].y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < hitRadius && dist < minDist) {
+        hitIndex = i;
+        minDist = dist;
+      }
+    }
+
+    if (hitIndex >= 0) {
+      this.setData({ draggingCorner: hitIndex });
+    }
+  },
+
+  /**
+   * Canvas touchmove — 拖拽角标
+   */
+  onCanvasTouchMove(e) {
+    if (!this.data.photoMode || this.data.draggingCorner < 0) return;
+    var touches = e.touches;
+    if (!touches || touches.length === 0) return;
+
+    var touch = touches[0];
+    var idx = this.data.draggingCorner;
+    var corners = this.data.photoCorners.slice();
+
+    // 限制在 Canvas 范围内
+    corners[idx] = {
+      x: Math.max(5, Math.min(this.data.canvasWidth - 5, touch.x)),
+      y: Math.max(5, Math.min(this.data.canvasHeight - 5, touch.y))
+    };
+
+    this.setData({ photoCorners: corners });
+    this._scheduleDraw();
+  },
+
+  /**
+   * Canvas touchend — 结束拖拽
+   */
+  onCanvasTouchEnd() {
+    if (this.data.draggingCorner >= 0) {
+      this.setData({ draggingCorner: -1 });
     }
   },
 
@@ -1074,6 +1223,14 @@ Page({
     var canvasH = data.canvasHeight;
     var gapH = wallHeight - 230 - 2; // 加高区域高度（cm）
 
+    // 照片模式：走透视渲染路径
+    if (data.photoMode && this._photoImg) {
+      this._drawPhotoMode(ctx, data, canvasW, canvasH, wallWidth, wallHeight,
+        cornerType, modules, showDoor, customWidth, selectedModule,
+        selectedWidth, isCustomModule, isLastModule, remainingStdWidth, gapH);
+      return;
+    }
+
     // 清空画布
     ctx.clearRect(0, 0, canvasW, canvasH);
 
@@ -1313,6 +1470,251 @@ Page({
     }
 
     log('[draw] 绘制完成, 已放置模块:', modules.length);
+  },
+
+  /**
+   * 照片模式绘制：照片背景 + 透视柜体 + 角标
+   */
+  _drawPhotoMode(ctx, data, canvasW, canvasH, wallWidth, wallHeight,
+                 cornerType, modules, showDoor, customWidth, selectedModule,
+                 selectedWidth, isCustomModule, isLastModule, remainingStdWidth, gapH) {
+    // 1. 绘制照片背景
+    if (this._photoImg) {
+      ctx.drawImage(this._photoImg, 0, 0, canvasW, canvasH);
+    }
+
+    // 2. 计算单应性矩阵（墙面坐标 → 照片Canvas坐标）
+    var corners = data.photoCorners;
+    var srcPoints = [
+      { x: 0, y: 0 },
+      { x: wallWidth, y: 0 },
+      { x: wallWidth, y: wallHeight },
+      { x: 0, y: wallHeight }
+    ];
+
+    if (!perspective.isConvexQuad(corners)) {
+      this._drawCornerMarkers(ctx, corners, data.draggingCorner);
+      ctx.fillStyle = '#FF6B6B';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('角点位置不合理，请调整', canvasW / 2, canvasH - 16);
+      ctx.textAlign = 'start';
+      return;
+    }
+
+    var H = perspective.computeHomography(srcPoints, corners);
+    if (!H) {
+      this._drawCornerMarkers(ctx, corners, data.draggingCorner);
+      return;
+    }
+
+    // 3. 构建待渲染的柜体列表
+    var cabinetList = this._buildPhotoCabinetList(data, wallWidth, wallHeight, gapH);
+
+    // 4. 按墙面 x 坐标排序
+    cabinetList.sort(function(a, b) { return a.wallX - b.wallX; });
+
+    // 5. 逐柜体透视渲染
+    for (var i = 0; i < cabinetList.length; i++) {
+      var cab = cabinetList[i];
+      this._drawCabinetPerspective(ctx, cab, H, data);
+    }
+
+    // 6. 绘制角标和连线
+    this._drawCornerMarkers(ctx, corners, data.draggingCorner);
+  },
+
+  /**
+   * 构建照片模式下需要渲染的柜体列表（墙面坐标）
+   */
+  _buildPhotoCabinetList(data, wallWidth, wallHeight, gapH) {
+    var list = [];
+    var cornerType = data.cornerType;
+    var modules = data.modules;
+    var skW = 2;
+    var zW = 110;
+    var moduleH = 230;
+
+    var hasLeftCorner = (cornerType === 'ZZJ' || cornerType === 'ZYZJ');
+    var hasRightCorner = (cornerType === 'YZJ' || cornerType === 'ZYZJ');
+
+    var curX = 0;
+
+    // 左侧收口条
+    list.push({ wallX: curX, wallY: gapH, wallW: skW, wallH: moduleH, imgKey: 'SK/SK-2-230' });
+    if (gapH > 0) {
+      list.push({ wallX: curX, wallY: 0, wallW: skW, wallH: gapH, imgKey: 'SK/SK-2-230' });
+    }
+    list.push({ wallX: curX, wallY: 0, wallW: skW, wallH: 2, imgKey: 'SK/SK-300-2' });
+    curX += skW;
+
+    // 左转角柜
+    if (hasLeftCorner) {
+      var zKey = data.showDoor ? 'z/z-110-230G' : 'z/z-110-230';
+      list.push({ wallX: curX, wallY: gapH, wallW: zW, wallH: moduleH, imgKey: zKey });
+      if (gapH > 0) {
+        var nearGH = this.getNearestGapHeight(gapH, true);
+        var zgKey = data.showDoor ? 'z/zg-110-' + nearGH + 'G' : 'z/zg-110-' + nearGH;
+        list.push({ wallX: curX, wallY: 0, wallW: zW, wallH: gapH, imgKey: zgKey });
+      }
+      list.push({ wallX: curX, wallY: 0, wallW: zW, wallH: 2, imgKey: 'SK/SK-300-2' });
+      curX += zW;
+    }
+
+    // 已放置的模块
+    for (var i = 0; i < modules.length; i++) {
+      var m = modules[i];
+      this._addModuleToPhotoList(list, m, curX, gapH, data.showDoor);
+      curX += m.width;
+    }
+
+    // 中间顶部收口条
+    var topSkStartX = skW + (hasLeftCorner ? zW : 0);
+    var topSkEndX = wallWidth - skW - (hasRightCorner ? zW : 0);
+    if (topSkEndX > topSkStartX) {
+      list.push({ wallX: topSkStartX, wallY: 0, wallW: topSkEndX - topSkStartX, wallH: 2, imgKey: 'SK/SK-300-2' });
+    }
+
+    // 右转角柜
+    if (hasRightCorner) {
+      var yX = wallWidth - skW - zW;
+      var yKey = data.showDoor ? 'y/y-110-230G' : 'y/y-110-230';
+      list.push({ wallX: yX, wallY: gapH, wallW: zW, wallH: moduleH, imgKey: yKey });
+      if (gapH > 0) {
+        var nearGHy = this.getNearestGapHeight(gapH, true);
+        var ygKey = data.showDoor ? 'y/yg-110-' + nearGHy + 'G' : 'y/yg-110-' + nearGHy;
+        list.push({ wallX: yX, wallY: 0, wallW: zW, wallH: gapH, imgKey: ygKey });
+      }
+      list.push({ wallX: yX, wallY: 0, wallW: zW, wallH: 2, imgKey: 'SK/SK-300-2' });
+    }
+
+    // 右侧收口条
+    var rightSkX = wallWidth - skW;
+    list.push({ wallX: rightSkX, wallY: gapH, wallW: skW, wallH: moduleH, imgKey: 'SK/SK-2-230' });
+    if (gapH > 0) {
+      list.push({ wallX: rightSkX, wallY: 0, wallW: skW, wallH: gapH, imgKey: 'SK/SK-2-230' });
+    }
+    list.push({ wallX: rightSkX, wallY: 0, wallW: skW, wallH: 2, imgKey: 'SK/SK-300-2' });
+
+    return list;
+  },
+
+  /**
+   * 将单个模块添加到照片柜体列表
+   */
+  _addModuleToPhotoList(list, m, startX, gapH, showDoor) {
+    var w = m.width;
+    var moduleH = 230;
+
+    if (m.isStandard) {
+      var mainKey = w + '/' + m.type + '-' + w + '-230';
+      list.push({ wallX: startX, wallY: gapH, wallW: w, wallH: moduleH, imgKey: mainKey });
+      if (showDoor) {
+        list.push({ wallX: startX, wallY: gapH, wallW: w, wallH: moduleH, imgKey: w + '/m-' + w + '-230G' });
+      }
+      if (gapH > 0) {
+        var nearGH = this.getNearestGapHeight(gapH, false);
+        list.push({ wallX: startX, wallY: 0, wallW: w, wallH: gapH, imgKey: w + '/g-' + w + '-' + nearGH });
+        if (showDoor) {
+          list.push({ wallX: startX, wallY: 0, wallW: w, wallH: gapH, imgKey: w + '/gm-' + w + '-30' });
+        }
+      }
+    } else {
+      var ew = this.getNearestEWidth(w);
+      var eMainKey = 'e/' + m.type + '-' + ew + '-230';
+      list.push({ wallX: startX, wallY: gapH, wallW: w, wallH: moduleH, imgKey: eMainKey });
+      if (showDoor) {
+        var doorW = w > 75 ? 100 : 50;
+        list.push({ wallX: startX, wallY: gapH, wallW: w, wallH: moduleH, imgKey: 'e/m-' + doorW + '-230G' });
+      }
+      if (gapH > 0) {
+        var eNearGH = this.getNearestGapHeight(gapH, false);
+        list.push({ wallX: startX, wallY: 0, wallW: w, wallH: gapH, imgKey: 'e/g/g-' + ew + '-' + eNearGH });
+        if (showDoor) {
+          var gmW = w > 75 ? 100 : 50;
+          var gmFile = gmW === 100 ? 'gm-100-60' : 'gm-50-30';
+          list.push({ wallX: startX, wallY: 0, wallW: w, wallH: gapH, imgKey: 'e/g/' + gmFile });
+        }
+      }
+    }
+    // 顶部收口条
+    list.push({ wallX: startX, wallY: 0, wallW: w, wallH: 2, imgKey: 'SK/SK-300-2' });
+  },
+
+  /**
+   * 以透视方式绘制单个柜体
+   */
+  _drawCabinetPerspective(ctx, cab, H, data) {
+    var img = this._imageCache[assets.picture(cab.imgKey)];
+    var quad = this._computeQuad(H, cab.wallX, cab.wallY, cab.wallW, cab.wallH);
+
+    if (!img) {
+      // 图片未加载，使用回退色块
+      ctx.fillStyle = '#f0ece2';
+      ctx.fillRect(
+        Math.min(quad[0].x, quad[3].x),
+        Math.min(quad[0].y, quad[1].y),
+        Math.abs(quad[1].x - quad[0].x),
+        Math.abs(quad[3].y - quad[0].y)
+      );
+      return;
+    }
+
+    perspective.drawPerspectiveImage(ctx, img, quad, 150);
+
+    // 米色叠底
+    if (data.selectedColor === 'cream') {
+      var colorImg = this._imageCache[assets.color('MI')];
+      if (colorImg) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'multiply';
+        perspective.drawPerspectiveImage(ctx, colorImg, quad, 150);
+        ctx.restore();
+        ctx.globalCompositeOperation = 'source-over';
+      }
+    }
+  },
+
+  /**
+   * 计算墙面矩形在照片 Canvas 中的四边形
+   */
+  _computeQuad(H, wallX, wallY, wallW, wallH) {
+    var tl = perspective.transformPoint(H, { x: wallX, y: wallY });
+    var tr = perspective.transformPoint(H, { x: wallX + wallW, y: wallY });
+    var br = perspective.transformPoint(H, { x: wallX + wallW, y: wallY + wallH });
+    var bl = perspective.transformPoint(H, { x: wallX, y: wallY + wallH });
+    return [tl, tr, br, bl];
+  },
+
+  /**
+   * 绘制四个角标和四边形连线
+   */
+  _drawCornerMarkers(ctx, corners, draggingCorner) {
+    // 四边形连线
+    ctx.strokeStyle = 'rgba(252, 151, 0, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(corners[0].x, corners[0].y);
+    for (var i = 1; i < 4; i++) {
+      ctx.lineTo(corners[i].x, corners[i].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 四个角标圆点
+    for (var j = 0; j < 4; j++) {
+      var isDragging = (j === draggingCorner);
+      var r = isDragging ? 10 : 7;
+      ctx.fillStyle = isDragging ? '#E08000' : '#FC9700';
+      ctx.beginPath();
+      ctx.arc(corners[j].x, corners[j].y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
   },
 
   /**

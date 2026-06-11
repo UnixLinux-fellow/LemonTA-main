@@ -18,10 +18,17 @@ function createGLBSceneManager(canvas, THREE) {
   var modelGroup;
   var originalSize = null;
   var currentScale = { x: 1, y: 1, z: 1 };
+  var _doorMeshes = [];
 
-  // Orbit state
-  var theta = 0.3;
-  var phi = Math.PI / 4;
+  function _isDoorMesh(name) {
+    if (!name) return false;
+    var lower = name.toLowerCase();
+    return lower === 'door' || lower.indexOf('_door') >= 0 || lower.indexOf('door_') >= 0;
+  }
+
+  // Orbit state (default front view: camera on +Z side, slight elevation)
+  var theta = Math.PI;
+  var phi = Math.PI / 24;
   var radius = 3;
   var target = { x: 0, y: 0, z: 0 };
 
@@ -47,11 +54,11 @@ function createGLBSceneManager(canvas, THREE) {
 
     camera = new THREE.PerspectiveCamera(45, _canvas.width / Math.max(_canvas.height, 1), 0.1, 100);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-    var dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+    var dirLight = new THREE.DirectionalLight(0xffffff, 3.0);
     dirLight.position.set(2, 4, 3);
     scene.add(dirLight);
-    var fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    var fillLight = new THREE.DirectionalLight(0xffffff, 1.2);
     fillLight.position.set(-2, 1, -2);
     scene.add(fillLight);
 
@@ -87,6 +94,15 @@ function createGLBSceneManager(canvas, THREE) {
 
           modelGroup.add(gltf.scene);
 
+          // Collect door nodes by name (case-insensitive) and hide them by default.
+          // Setting visible=false on a Group hides its whole subtree.
+          gltf.scene.traverse(function (node) {
+            if (_isDoorMesh(node.name)) {
+              node.visible = false;
+              _doorMeshes.push(node);
+            }
+          });
+
           var box = new THREE.Box3().setFromObject(gltf.scene);
           var size = new THREE.Vector3();
           box.getSize(size);
@@ -110,7 +126,7 @@ function createGLBSceneManager(canvas, THREE) {
           var maxDim = Math.max(size.x, size.y, size.z, 0.01);
           radius = maxDim * 2.5;
           target.x = 0;
-          target.y = 0;
+          target.y = -size.y * 0.25;
           target.z = 0;
           _updateCamera();
 
@@ -137,6 +153,7 @@ function createGLBSceneManager(canvas, THREE) {
       modelGroup.remove(child);
     }
     originalSize = null;
+    _doorMeshes = [];
   }
 
   function _disposeObject(obj) {
@@ -193,6 +210,23 @@ function createGLBSceneManager(canvas, THREE) {
     currentScale.z = 1;
     modelGroup.scale.set(1, 1, 1);
     renderer.render(scene, camera);
+  }
+
+  // ---- Door visibility ----
+
+  function setDoorVisible(visible) {
+    if (!_doorMeshes || _doorMeshes.length === 0) return;
+    var v = !!visible;
+    for (var i = 0; i < _doorMeshes.length; i++) {
+      _doorMeshes[i].visible = v;
+    }
+    if (renderer && scene && camera) {
+      renderer.render(scene, camera);
+    }
+  }
+
+  function hasDoorMeshes() {
+    return _doorMeshes && _doorMeshes.length > 0;
   }
 
   // ---- Camera ----
@@ -293,6 +327,7 @@ function createGLBSceneManager(canvas, THREE) {
     modelGroup = null;
     originalSize = null;
     currentScale = { x: 1, y: 1, z: 1 };
+    _doorMeshes = [];
   }
 
   return {
@@ -303,6 +338,8 @@ function createGLBSceneManager(canvas, THREE) {
     getOriginalSize: getOriginalSize,
     getCurrentScale: getCurrentScale,
     resetScale: resetScale,
+    setDoorVisible: setDoorVisible,
+    hasDoorMeshes: hasDoorMeshes,
     handleTouchStart: handleTouchStart,
     handleTouchMove: handleTouchMove,
     handleTouchEnd: handleTouchEnd,

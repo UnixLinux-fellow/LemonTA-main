@@ -1,0 +1,392 @@
+/* pages/knowledge/pd2d/pd2d.wxss */
+
+.page {
+  width: 100vw;
+  height: 100vh;
+  background: #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ===== 导航栏 ===== */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(42, 42, 42, 0.92);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 16rpx;
+}
+
+.nav-back {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.nav-back:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-back-icon {
+  font-size: 52rpx;
+  color: #ffffff;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.nav-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5rpx;
+  margin-left: 8rpx;
+}
+
+/* ===== 未确认：Canvas 全屏 ===== */
+.canvas-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 8rpx;
+}
+
+/* ===== 已确认：照片区域 (高度由 inline style 动态设置) ===== */
+.photo-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 6rpx;
+  flex-shrink: 0;
+}
+
+.pd2d-canvas {
+  width: 100%;
+  height: 100%;
+  border-radius: 4rpx;
+}
+
+/* ===== 操作按钮行 ===== */
+.action-row {
+  display: flex;
+  gap: 16rpx;
+  padding: 12rpx 24rpx;
+  flex-shrink: 0;
+}
+
+/* ===== 按钮 ===== */
+.btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18rpx 0;
+  border-radius: 16rpx;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.btn:active {
+  opacity: 0.85;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #FFB140 0%, #FC9700 100%);
+  color: #ffffff;
+}
+
+.btn-outline {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  border: 1rpx solid rgba(255, 255, 255, 0.12);
+}
+
+.btn-outline:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.btn-active {
+  background: rgba(252, 151, 0, 0.15);
+  border-color: rgba(252, 151, 0, 0.4);
+  color: #FC9700;
+}
+
+.btn-small {
+  flex: 1;
+  padding: 14rpx 0;
+  font-size: 24rpx;
+}
+
+/* ===== 空间配置行 ===== */
+.bottom-bar {
+  background: rgba(42, 42, 42, 0.95);
+  border-top: 1rpx solid rgba(255, 255, 255, 0.08);
+  padding: 12rpx 20rpx;
+  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+  flex-shrink: 0;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 10rpx;
+}
+
+.bar-row:last-child {
+  margin-bottom: 0;
+}
+
+.dims-row {
+  gap: 12rpx;
+}
+
+.dims-label {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.55);
+  flex-shrink: 0;
+  width: 130rpx;
+}
+
+.dims-unit {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.55);
+  flex-shrink: 0;
+  width: 48rpx;
+  text-align: left;
+}
+
+.dims-input {
+  flex: 1;
+  height: 64rpx;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10rpx;
+  padding: 0 16rpx;
+  font-size: 28rpx;
+  color: #FC9700;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.name-input {
+  flex: 1;
+  height: 64rpx;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10rpx;
+  padding: 0 16rpx;
+  font-size: 28rpx;
+  color: #FC9700;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.btn-confirm {
+  flex: 1;
+  padding: 18rpx 0;
+  font-size: 28rpx;
+}
+
+/* ===== 芯片 ===== */
+.chip {
+  padding: 10rpx 20rpx;
+  border-radius: 14rpx;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+}
+
+.chip text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 500;
+}
+
+.chip:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.chip-active {
+  background: rgba(252, 151, 0, 0.15);
+  border-color: rgba(252, 151, 0, 0.3);
+}
+
+.chip-active text {
+  color: #FC9700;
+  font-weight: 600;
+}
+
+.chip-disabled {
+  opacity: 0.4;
+  pointer-events: auto;
+}
+
+/* ===== 上传触发区 ===== */
+.upload-trigger {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  z-index: 50;
+}
+
+.upload-icon-circle {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  border: 4rpx dashed rgba(252, 151, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(252, 151, 0, 0.08);
+}
+
+.upload-icon-circle:active {
+  background: rgba(252, 151, 0, 0.2);
+  border-color: rgba(252, 151, 0, 0.7);
+}
+
+.upload-icon-text {
+  font-size: 72rpx;
+  color: rgba(252, 151, 0, 0.5);
+  font-weight: 200;
+  line-height: 1;
+}
+
+.upload-text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== 柜体积木框 ===== */
+.blocks-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8rpx 24rpx;
+  padding-bottom: calc(8rpx + env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.blocks-width-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 8rpx 0;
+  flex-shrink: 0;
+}
+
+.blocks-section-label {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+}
+
+.preview-scroll {
+  width: 100%;
+  flex: 1;
+  min-height: 160rpx;
+  margin: 6rpx 0;
+  white-space: nowrap;
+}
+
+.preview-track {
+  display: inline-block;
+  height: 100%;
+  vertical-align: top;
+}
+
+.model-preview-canvas {
+  height: 100%;
+  border-radius: 8rpx;
+}
+
+.scroll-indicator {
+  position: relative;
+  width: 100%;
+  height: 6rpx;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3rpx;
+  margin: 4rpx 0 8rpx;
+  flex-shrink: 0;
+}
+
+.scroll-indicator-thumb {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(252, 151, 0, 0.7);
+  border-radius: 3rpx;
+  transition: left 0.05s linear;
+}
+
+.blocks-nav-row {
+  display: flex;
+  gap: 16rpx;
+  padding: 10rpx 0;
+  flex-shrink: 0;
+}
+
+.btn-nav {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-nav:active {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.btn-nav-primary {
+  background: linear-gradient(135deg, #FFB140 0%, #FC9700 100%);
+  color: #ffffff;
+  border: none;
+}
+
+/* ===== 2D 照片 + 3D overlay 叠加 ===== */
+.canvas-stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas-stack .pd2d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pd2d-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}

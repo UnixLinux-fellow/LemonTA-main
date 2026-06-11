@@ -364,3 +364,41 @@
 .modal-btn-confirm:active {
   background: #d69320;
 }
+
+/* 照片模式操作按钮 */
+.photo-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.photo-btn {
+  padding: 16rpx 40rpx;
+  border: 2rpx dashed #FC9700;
+  border-radius: 40rpx;
+  font-size: 26rpx;
+  color: #FC9700;
+  background: #FFF8F0;
+  transition: all 0.2s;
+}
+
+.photo-btn:active {
+  background: #FFF0E0;
+}
+
+.photo-btn.remove {
+  border-color: #ccc;
+  color: #999;
+  background: #f5f5f5;
+}
+
+.photo-btn.remove:active {
+  background: #eee;
+}
+
+.photo-hint {
+  font-size: 22rpx;
+  color: #FC9700;
+}
