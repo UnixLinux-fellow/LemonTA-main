@@ -367,37 +367,72 @@ Page({
       wx.showToast({ title: '请先放置柜体', icon: 'none' });
       return;
     }
+    if (self._saving) return;
+    var name = self.data.spaceName || '未命名方案';
     wx.showModal({
       title: '保存方案',
-      editable: true,
-      placeholderText: '方案名（可选）',
-      content: self.data.spaceName || '',
+      content: '保存方案到《' + name + '》？',
       success: function(modal) {
         if (!modal.confirm) return;
-        var name = (modal.content || '').trim() || self.data.spaceName || '未命名方案';
+        if (self._saving) return;
+        self._saving = true;
         wx.showLoading({ title: '保存中...', mask: true });
-        var storage = require('../../../utils/pd2dStorage.js');
-        var photoPath = self._photoTempPath || '';
-        storage.saveLayout({
-          name: name,
-          photoPath: photoPath,
-          spaceName: self.data.spaceName,
-          wall: { width: self.data.wallWidth, height: self.data.wallHeight },
-          corners: self.data.corners,
-          selectedWidth: self.data.selectedWidth,
-          selectedType: self.data.selectedType,
-          selectedModelId: self.data.selectedModelId,
-          doorVisible: self.data.doorVisible,
-          modules: self.data.modules
-        }).then(function() {
-          wx.hideLoading();
-          wx.showToast({ title: '已保存', icon: 'success' });
+
+        var composite = require('../../../utils/pd2dComposite.js');
+        var compositePromise = composite.composePreview({
+          photoCanvas: self._canvas,
+          overlayCanvas: self._overlayCanvas,
+          width: self.data.canvasWidth,
+          height: self.data.canvasHeight,
+          dpr: self._dpr || 2
         }).catch(function(err) {
+          console.warn('[pd2d] composePreview failed, fall back to no composite:', err);
+          return '';
+        });
+
+        compositePromise.then(function(compositePath) {
+          var storage = require('../../../utils/pd2dStorage.js');
+          var photoPath = self._photoTempPath || '';
+          return storage.saveLayout({
+            name: name,
+            photoPath: photoPath,
+            compositePath: compositePath || '',
+            spaceName: self.data.spaceName,
+            wall: { width: self.data.wallWidth, height: self.data.wallHeight },
+            corners: self.data.corners,
+            selectedWidth: self.data.selectedWidth,
+            selectedType: self.data.selectedType,
+            selectedModelId: self.data.selectedModelId,
+            doorVisible: self.data.doorVisible,
+            modules: self.data.modules
+          });
+        }).then(function(saved) {
+          wx.hideLoading();
+          wx.showToast({ title: '已保存', icon: 'success', duration: 800 });
+          var bridgeId = 'pd2dlocal:' + saved.id;
+          var url = '/pages/knowledge/pd2dList/pd2dList?openCostId=' + encodeURIComponent(bridgeId);
+          setTimeout(function() {
+            wx.redirectTo({
+              url: url,
+              fail: function() {
+                wx.navigateTo({
+                  url: url,
+                  fail: function() {
+                    wx.showToast({ title: '跳转失败', icon: 'none' });
+                  }
+                });
+              }
+            });
+            self._saving = false;
+          }, 600);
+        }).catch(function(err) {
+          self._saving = false;
           wx.hideLoading();
           console.error('[pd2d] save layout failed', err);
           wx.showToast({ title: '保存失败', icon: 'none' });
         });
-      }
+      },
+      fail: function() { /* user dismissed modal */ }
     });
   },
 
