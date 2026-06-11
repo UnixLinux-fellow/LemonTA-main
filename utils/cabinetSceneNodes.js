@@ -91,24 +91,6 @@ function buildSceneNodes(opts) {
     _emitCabinetStack(nodes, _modelId(m.type, m.width), baseW, m.wallX, m.width, Hh, d);
   }
 
-  if (modules.length > 0) {
-    var rightmostEnd = 0;
-    for (var p = 0; p < modules.length; p++) {
-      var endX = modules[p].wallX + modules[p].width;
-      if (endX > rightmostEnd) rightmostEnd = endX;
-    }
-    var trailing = (W - SK) - rightmostEnd;
-    if (trailing > 0 && trailing < MIN_STANDARD_WIDTH) {
-      if (trailing < SOLID_TRIM_THRESHOLD) {
-        _emitTrimWithGap(nodes, rightmostEnd, trailing, gap, d);
-      } else {
-        var scaledW = trailing - CLOSING_PANEL_WIDTH;
-        _emitCabinetWithGap(nodes, '50A', rightmostEnd, scaledW, gap, d);
-        _emitTrimWithGap(nodes, rightmostEnd + scaledW, CLOSING_PANEL_WIDTH, gap, d);
-      }
-    }
-  }
-
   nodes.push({ type: 'trim', x: 0,    y: 0, z: 0, w: SK, h: CABINET_HEIGHT, d: d });
   nodes.push({ type: 'trim', x: W-SK, y: 0, z: 0, w: SK, h: CABINET_HEIGHT, d: d });
 

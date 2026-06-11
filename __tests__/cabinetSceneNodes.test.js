@@ -87,7 +87,8 @@ describe('buildSceneNodes', function() {
     expect(cab[0].modelId).toBe('50G1');
   });
 
-  it('trailing < 30cm: emits a single closing trim spanning full trailing width', function() {
+  // behavior moved to pd2d.js (Task 5) / scene-nodes residual fallback (Task 8)
+  xit('trailing < 30cm: emits a single closing trim spanning full trailing width', function() {
     // wallWidth=282, modules end at 252; trailing = 282 - 2 - 252 = 28 (< 30)
     var out = nodes.buildSceneNodes({
       wallWidth: 282, wallHeight: 232,
@@ -109,7 +110,8 @@ describe('buildSceneNodes', function() {
     expect(fillCabs.length).toBe(0);
   });
 
-  it('30 <= trailing < 50cm: emits scaled 50A + 4cm closing trim against right SK', function() {
+  // behavior moved to pd2d.js (Task 5) / scene-nodes residual fallback (Task 8)
+  xit('30 <= trailing < 50cm: emits scaled 50A + 4cm closing trim against right SK', function() {
     // wallWidth=240, modules end at 202; trailing = 240 - 2 - 202 = 36 (>=30, <50)
     var out = nodes.buildSceneNodes({
       wallWidth: 240, wallHeight: 232,
@@ -161,7 +163,8 @@ describe('buildSceneNodes', function() {
     expect(fillCabs.length).toBe(0);
   });
 
-  it('auto-fill respects wall gap: emits upper-SK fragments above scaled cabinet and closing panel', function() {
+  // behavior moved to pd2d.js (Task 5) / scene-nodes residual fallback (Task 8)
+  xit('auto-fill respects wall gap: emits upper-SK fragments above scaled cabinet and closing panel', function() {
     // wallWidth=240, wallHeight=260, gap=28
     var out = nodes.buildSceneNodes({
       wallWidth: 240, wallHeight: 260,
@@ -192,6 +195,34 @@ describe('buildSceneNodes', function() {
     });
     expect(fillers.length).toBe(1);
     expect(fillers[0].h).toBe(246 - 230 - 2);
+  });
+});
+
+describe('buildSceneNodes - trailing handed off to caller', function() {
+  var DEPTH = 60;
+
+  it('does NOT auto-emit a trailing 50A when modules leave 50<gap<100 on right', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 300, wallHeight: 246,
+      modules: [{ type: 'a', width: 200, wallX: 2 }],
+      depth: DEPTH
+    });
+    var fillerCabs = out.filter(function(n) {
+      return n.type === 'cabinet' && n.modelId === '50A';
+    });
+    expect(fillerCabs.length).toBe(0);
+  });
+
+  it('does NOT auto-emit trailing trim cuboid for narrow gap (<30)', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 300, wallHeight: 246,
+      modules: [{ type: 'a', width: 280, wallX: 2 }],
+      depth: DEPTH
+    });
+    var trailingTrim = out.filter(function(n) {
+      return n.type === 'trim' && n.x === 282 && n.y === 0 && n.h === 230;
+    });
+    expect(trailingTrim.length).toBe(0);
   });
 });
 
