@@ -874,7 +874,8 @@ Page({
     }
 
     // 兼容：?id=<_id>（云数据库方案，推荐）；?index=<数字> 老的数组下标（保留兜底）
-    var designId = options.id;
+    // 调用方用 encodeURIComponent 编码过 id（pd2dList 桥接 id 含冒号），这里必须解码
+    var designId = options.id ? decodeURIComponent(options.id) : '';
     var designIndex = options.index !== undefined ? parseInt(options.index) : -1;
 
     var self = this;
