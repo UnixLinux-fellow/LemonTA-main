@@ -112,17 +112,25 @@ function buildSceneNodes(opts) {
   nodes.push({ type: 'trim', x: 0,    y: 0, z: 0, w: SK, h: CABINET_HEIGHT, d: d });
   nodes.push({ type: 'trim', x: W-SK, y: 0, z: 0, w: SK, h: CABINET_HEIGHT, d: d });
 
-  if (gap > 0) {
-    nodes.push({ type: 'trim', x: 0,    y: CABINET_HEIGHT, z: 0, w: SK, h: gap, d: d });
-    nodes.push({ type: 'trim', x: W-SK, y: CABINET_HEIGHT, z: 0, w: SK, h: gap, d: d });
-  }
-
-  if (W > 2*SK) {
-    nodes.push({
-      type: 'trim',
-      x: SK, y: Hh - TOP_BAR_THICKNESS, z: 0,
-      w: W - 2*SK, h: TOP_BAR_THICKNESS, d: d
-    });
+  if (Hh >= HIGH_WALL_THRESHOLD) {
+    var skUpperH = Hh - CABINET_HEIGHT;
+    if (skUpperH > 0) {
+      nodes.push({ type: 'trim', x: 0,    y: CABINET_HEIGHT, z: 0, w: SK, h: skUpperH, d: d });
+      nodes.push({ type: 'trim', x: W-SK, y: CABINET_HEIGHT, z: 0, w: SK, h: skUpperH, d: d });
+    }
+  } else {
+    var skUpperGap = Hh - CABINET_HEIGHT - TOP_BAR_THICKNESS;
+    if (skUpperGap > 0) {
+      nodes.push({ type: 'trim', x: 0,    y: CABINET_HEIGHT, z: 0, w: SK, h: skUpperGap, d: d });
+      nodes.push({ type: 'trim', x: W-SK, y: CABINET_HEIGHT, z: 0, w: SK, h: skUpperGap, d: d });
+    }
+    if (W > 2*SK) {
+      nodes.push({
+        type: 'trim',
+        x: SK, y: Hh - TOP_BAR_THICKNESS, z: 0,
+        w: W - 2*SK, h: TOP_BAR_THICKNESS, d: d
+      });
+    }
   }
 
   return nodes;

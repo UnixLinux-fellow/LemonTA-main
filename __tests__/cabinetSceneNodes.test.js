@@ -5,7 +5,7 @@ describe('buildSceneNodes', function() {
 
   it('empty wall: 5 trim nodes (2 main SK + 2 upper SK + top bar) when gap>0', function() {
     var out = nodes.buildSceneNodes({
-      wallWidth: 300, wallHeight: 260, modules: [], depth: DEPTH
+      wallWidth: 300, wallHeight: 246, modules: [], depth: DEPTH
     });
     var trims = out.filter(function(n) { return n.type === 'trim'; });
     var cabinets = out.filter(function(n) { return n.type === 'cabinet'; });
@@ -55,10 +55,10 @@ describe('buildSceneNodes', function() {
 
   it('top bar spans full inner width', function() {
     var out = nodes.buildSceneNodes({
-      wallWidth: 300, wallHeight: 260, modules: [], depth: DEPTH
+      wallWidth: 300, wallHeight: 246, modules: [], depth: DEPTH
     });
     var top = out.filter(function(n) {
-      return n.type === 'trim' && n.h === 2 && n.y === 258;
+      return n.type === 'trim' && n.h === 2 && n.y === 244;
     });
     expect(top.length).toBe(1);
     expect(top[0].x).toBe(2);
@@ -67,11 +67,11 @@ describe('buildSceneNodes', function() {
 
   it('side SK columns at x=0 and x=wallWidth-2', function() {
     var out = nodes.buildSceneNodes({
-      wallWidth: 300, wallHeight: 260, modules: [], depth: DEPTH
+      wallWidth: 300, wallHeight: 246, modules: [], depth: DEPTH
     });
     var leftMain  = out.filter(function(n) { return n.type==='trim' && n.x===0   && n.y===0   && n.h===230; });
     var rightMain = out.filter(function(n) { return n.type==='trim' && n.x===298 && n.y===0   && n.h===230; });
-    var leftUpper = out.filter(function(n) { return n.type==='trim' && n.x===0   && n.y===230 && n.h===28; });
+    var leftUpper = out.filter(function(n) { return n.type==='trim' && n.x===0   && n.y===230 && n.h===14; });
     expect(leftMain.length).toBe(1);
     expect(rightMain.length).toBe(1);
     expect(leftUpper.length).toBe(1);
@@ -180,6 +180,19 @@ describe('buildSceneNodes', function() {
     });
     expect(closingUpper.length).toBe(1);
   });
+
+  it('low wall (<247) keeps existing g-* trim filler above cabinet', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 300, wallHeight: 246,
+      modules: [{ type: 'a', width: 100, wallX: 50 }],
+      depth: DEPTH
+    });
+    var fillers = out.filter(function(n) {
+      return n.type === 'trim' && n.y === 230 && n.x === 50 && n.w === 100;
+    });
+    expect(fillers.length).toBe(1);
+    expect(fillers[0].h).toBe(246 - 230 - 2);
+  });
 });
 
 describe('buildSceneNodes - high wall (≥247)', function() {
@@ -219,16 +232,36 @@ describe('buildSceneNodes - high wall (≥247)', function() {
     expect(g1[0].h).toBe(260 - 230 - 4);
   });
 
-  it('low wall (<247) keeps existing g-* trim filler above cabinet', function() {
+  it('boundary: wallHeight=247 triggers high wall logic (G1 cabinet emitted)', function() {
     var out = nodes.buildSceneNodes({
-      wallWidth: 300, wallHeight: 246,
+      wallWidth: 300, wallHeight: 247,
       modules: [{ type: 'a', width: 100, wallX: 50 }],
-      depth: DEPTH
+      depth: 60
     });
-    var fillers = out.filter(function(n) {
-      return n.type === 'trim' && n.y === 230 && n.x === 50 && n.w === 100;
-    });
-    expect(fillers.length).toBe(1);
-    expect(fillers[0].h).toBe(246 - 230 - 2);
+    var g1 = out.filter(function(n) { return n.type==='cabinet' && n.modelId==='100G1'; });
+    expect(g1.length).toBe(1);
+    expect(g1[0].h).toBe(247 - 230 - 4);
   });
+
+  it('high wall: no full-wall 2cm top bar', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 300, wallHeight: 280, modules: [], depth: 60
+    });
+    var topBar = out.filter(function(n) {
+      return n.type === 'trim' && n.x === SK_VAL() && n.y === 278 && n.h === 2;
+    });
+    expect(topBar.length).toBe(0);
+  });
+
+  it('high wall, empty wall: SK columns span full height in two pieces', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 300, wallHeight: 280, modules: [], depth: 60
+    });
+    var leftMain  = out.filter(function(n) { return n.type==='trim' && n.x===0 && n.y===0   && n.h===230 && n.w===2; });
+    var leftUpper = out.filter(function(n) { return n.type==='trim' && n.x===0 && n.y===230 && n.h===50  && n.w===2; });
+    expect(leftMain.length).toBe(1);
+    expect(leftUpper.length).toBe(1);
+  });
+
+  function SK_VAL() { return 2; }
 });
