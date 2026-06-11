@@ -119,15 +119,24 @@ function loadLayout(id) {
 function deleteLayout(id) {
   var all = readAll();
   var photoPath = null;
+  var compositePath = null;
   var kept = [];
   for (var i = 0; i < all.length; i++) {
-    if (all[i].id === id) photoPath = all[i].photoPath;
-    else kept.push(all[i]);
+    if (all[i].id === id) {
+      photoPath = all[i].photoPath;
+      compositePath = all[i].compositePath;
+    } else {
+      kept.push(all[i]);
+    }
   }
   writeAll(kept);
-  if (photoPath && photoPath.indexOf('wxfile://') === 0) {
-    try { wx.removeSavedFile({ filePath: photoPath, success: function(){}, fail: function(){} }); } catch (e) {}
+  function removeIfSaved(p) {
+    if (p && p.indexOf('wxfile://') === 0) {
+      try { wx.removeSavedFile({ filePath: p, success: function(){}, fail: function(){} }); } catch (e) {}
+    }
   }
+  removeIfSaved(photoPath);
+  removeIfSaved(compositePath);
 }
 
 function isNameUnique(name, excludeId) {

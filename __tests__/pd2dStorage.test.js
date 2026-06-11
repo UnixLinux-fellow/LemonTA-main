@@ -68,3 +68,26 @@ describe('pd2dStorage.saveLayout compositePath', function() {
     });
   });
 });
+
+describe('pd2dStorage.deleteLayout cleanup', function() {
+  it('removes both photo and composite saved files', function(done) {
+    storage.saveLayout({
+      name: '客厅', photoPath: 'wxfile://temp_p',
+      compositePath: 'wxfile://temp_c',
+      wall: { width: 300, height: 260 }, modules: []
+    }).then(function(saved) {
+      var photoPath = saved.photoPath;
+      var compositePath = saved.compositePath;
+      expect(photoPath).toMatch(/^wxfile:\/\/saved_/);
+      expect(compositePath).toMatch(/^wxfile:\/\/saved_/);
+
+      wx.removeSavedFile.mockClear();
+      storage.deleteLayout(saved.id);
+
+      var calls = wx.removeSavedFile.mock.calls.map(function(c){ return c[0].filePath; });
+      expect(calls).toContain(photoPath);
+      expect(calls).toContain(compositePath);
+      done();
+    });
+  });
+});
