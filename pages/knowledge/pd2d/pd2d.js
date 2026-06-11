@@ -750,8 +750,49 @@ Page({
 
   // ========== 触摸处理（角点拖拽） ==========
 
+  _hitTestModule: function(touchX, touchY) {
+    if (!this._photoImg && !this.data.spaceConfirmed) return -1;
+    var canvasW = this.data.canvasWidth;
+    var SK = 2;
+    var pxPerCm = (canvasW - 2 * SK) / Math.max(this.data.wallWidth - 2 * SK, 1);
+    var modules = this.data.modules || [];
+    for (var i = 0; i < modules.length; i++) {
+      var m = modules[i];
+      if (!m.autoFilled) continue;
+      var x0 = m.wallX * pxPerCm;
+      var x1 = (m.wallX + m.width) * pxPerCm;
+      if (touchX >= x0 && touchX <= x1) return i;
+    }
+    return -1;
+  },
+
+  _showAutoFilledTypeSelector: function(idx) {
+    var self = this;
+    wx.showActionSheet({
+      itemList: ['100A', '100B', '100C', '100D'],
+      success: function(res) {
+        var typeMap = ['a', 'b', 'c', 'd'];
+        var newType = typeMap[res.tapIndex];
+        var modules = self.data.modules.slice();
+        modules[idx] = Object.assign({}, modules[idx], { type: newType });
+        self.setData({ modules: modules });
+        self._drawFrame();
+        self._scheduleOverlayUpdate();
+      }
+    });
+  },
+
   onCanvasTouchStart(e) {
     if (!this.data.spaceConfirmed) return;
+
+    if (e.touches && e.touches[0]) {
+      var t0 = e.touches[0];
+      var hitIdx = this._hitTestModule(t0.x, t0.y);
+      if (hitIdx >= 0) {
+        this._showAutoFilledTypeSelector(hitIdx);
+        return;
+      }
+    }
 
     var touches = e.touches;
     if (!touches || touches.length === 0) return;

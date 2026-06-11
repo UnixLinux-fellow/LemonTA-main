@@ -121,6 +121,32 @@ function buildSceneNodes(opts) {
     }
   }
 
+  var rightmostEnd = SK;
+  for (var ri = 0; ri < modules.length; ri++) {
+    var rEnd = modules[ri].wallX + modules[ri].width;
+    if (modules[ri].autoFilled) rEnd += RIGHT_CLOSING_WIDTH;
+    if (rEnd > rightmostEnd) rightmostEnd = rEnd;
+  }
+  var residual = (W - SK) - rightmostEnd;
+  if (residual > 0 && residual < SOLID_TRIM_THRESHOLD) {
+    nodes.push({
+      type: 'trim',
+      x: rightmostEnd, y: 0, z: 0,
+      w: residual, h: CABINET_HEIGHT, d: d
+    });
+    if (Hh >= HIGH_WALL_THRESHOLD) {
+      var resUpper = Hh - CABINET_HEIGHT - TOP_CLOSING_HEIGHT;
+      if (resUpper > 0) {
+        nodes.push({ type: 'trim', x: rightmostEnd, y: CABINET_HEIGHT, z: 0, w: residual, h: resUpper, d: d });
+      }
+    } else {
+      var resGap = Hh - CABINET_HEIGHT - TOP_BAR_THICKNESS;
+      if (resGap > 0) {
+        nodes.push({ type: 'trim', x: rightmostEnd, y: CABINET_HEIGHT, z: 0, w: residual, h: resGap, d: d });
+      }
+    }
+  }
+
   nodes.push({ type: 'trim', x: 0,    y: 0, z: 0, w: SK, h: CABINET_HEIGHT, d: d });
   nodes.push({ type: 'trim', x: W-SK, y: 0, z: 0, w: SK, h: CABINET_HEIGHT, d: d });
 

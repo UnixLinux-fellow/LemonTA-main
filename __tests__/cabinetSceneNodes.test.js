@@ -256,17 +256,21 @@ describe('buildSceneNodes - trailing handed off to caller', function() {
     });
     expect(fillerCabs.length).toBe(0);
   });
+});
 
-  it('does NOT auto-emit trailing trim cuboid for narrow gap (<30)', function() {
+describe('buildSceneNodes - residual <30 trim cuboid', function() {
+  var DEPTH = 60;
+
+  it('emits trim cuboid when wallWidth - SK*2 - sum(modules.width) < 30 and > 0', function() {
     var out = nodes.buildSceneNodes({
       wallWidth: 300, wallHeight: 246,
       modules: [{ type: 'a', width: 280, wallX: 2 }],
       depth: DEPTH
     });
-    var trailingTrim = out.filter(function(n) {
-      return n.type === 'trim' && n.x === 282 && n.y === 0 && n.h === 230;
+    var trail = out.filter(function(n) {
+      return n.type==='trim' && n.x===282 && n.y===0 && n.h===230 && n.w===16;
     });
-    expect(trailingTrim.length).toBe(0);
+    expect(trail.length).toBe(1);
   });
 });
 
