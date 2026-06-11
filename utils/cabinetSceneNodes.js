@@ -91,6 +91,36 @@ function buildSceneNodes(opts) {
     _emitCabinetStack(nodes, _modelId(m.type, m.width), baseW, m.wallX, m.width, Hh, d);
   }
 
+  for (var ai = 0; ai < modules.length; ai++) {
+    var am = modules[ai];
+    if (!am.autoFilled) continue;
+    var rx = am.wallX + am.width;
+    nodes.push({
+      type: 'trim',
+      x: rx, y: 0, z: 0,
+      w: RIGHT_CLOSING_WIDTH, h: CABINET_HEIGHT, d: d
+    });
+    if (Hh >= HIGH_WALL_THRESHOLD) {
+      var upperH = Hh - CABINET_HEIGHT - TOP_CLOSING_HEIGHT;
+      if (upperH > 0) {
+        nodes.push({
+          type: 'trim',
+          x: rx, y: CABINET_HEIGHT, z: 0,
+          w: RIGHT_CLOSING_WIDTH, h: upperH, d: d
+        });
+      }
+    } else {
+      var upperGap = Hh - CABINET_HEIGHT - TOP_BAR_THICKNESS;
+      if (upperGap > 0) {
+        nodes.push({
+          type: 'trim',
+          x: rx, y: CABINET_HEIGHT, z: 0,
+          w: RIGHT_CLOSING_WIDTH, h: upperGap, d: d
+        });
+      }
+    }
+  }
+
   nodes.push({ type: 'trim', x: 0,    y: 0, z: 0, w: SK, h: CABINET_HEIGHT, d: d });
   nodes.push({ type: 'trim', x: W-SK, y: 0, z: 0, w: SK, h: CABINET_HEIGHT, d: d });
 

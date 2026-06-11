@@ -198,6 +198,50 @@ describe('buildSceneNodes', function() {
   });
 });
 
+describe('buildSceneNodes - autoFilled right closure', function() {
+  var DEPTH = 60;
+
+  it('autoFilled module: 4cm trim cuboid at its right edge, full main height (low wall)', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 200, wallHeight: 246,
+      modules: [{ type: 'a', width: 196, wallX: 2, autoFilled: true }],
+      depth: DEPTH
+    });
+    var rightClose = out.filter(function(n) {
+      return n.type === 'trim' && n.x === 198 && n.y === 0 && n.w === 4 && n.h === 230;
+    });
+    expect(rightClose.length).toBe(1);
+  });
+
+  it('autoFilled module: right closure also extends through G1 region (high wall)', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 200, wallHeight: 280,
+      modules: [{ type: 'a', width: 196, wallX: 2, autoFilled: true }],
+      depth: DEPTH
+    });
+    var rightCloseMain = out.filter(function(n) {
+      return n.type==='trim' && n.x===198 && n.y===0 && n.w===4 && n.h===230;
+    });
+    var rightCloseUpper = out.filter(function(n) {
+      return n.type==='trim' && n.x===198 && n.y===230 && n.w===4 && n.h===(280-230-4);
+    });
+    expect(rightCloseMain.length).toBe(1);
+    expect(rightCloseUpper.length).toBe(1);
+  });
+
+  it('non-autoFilled module: NO right closure trim', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 200, wallHeight: 246,
+      modules: [{ type: 'a', width: 196, wallX: 2 }],
+      depth: DEPTH
+    });
+    var rightClose = out.filter(function(n) {
+      return n.type==='trim' && n.x===198 && n.y===0 && n.w===4;
+    });
+    expect(rightClose.length).toBe(0);
+  });
+});
+
 describe('buildSceneNodes - trailing handed off to caller', function() {
   var DEPTH = 60;
 
