@@ -89,10 +89,10 @@
       <!-- 宽度选择 -->
       <view class="blocks-width-row">
         <text class="blocks-section-label">柜体宽度</text>
-        <view class="chip {{selectedWidth === 50 ? 'chip-active' : ''}}" bindtap="selectWidth" data-width="50">
+        <view class="chip {{selectedWidth === 50 ? 'chip-active' : ''}} {{!canPlace50 ? 'chip-disabled' : ''}}" bindtap="selectWidth" data-width="50">
           <text>50cm</text>
         </view>
-        <view class="chip {{selectedWidth === 100 ? 'chip-active' : ''}}" bindtap="selectWidth" data-width="100">
+        <view class="chip {{selectedWidth === 100 ? 'chip-active' : ''}} {{!canPlace100 ? 'chip-disabled' : ''}}" bindtap="selectWidth" data-width="100">
           <text>100cm</text>
         </view>
       </view>

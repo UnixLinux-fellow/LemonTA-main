@@ -230,6 +230,11 @@
   font-weight: 600;
 }
 
+.chip-disabled {
+  opacity: 0.4;
+  pointer-events: auto;
+}
+
 /* ===== 上传触发区 ===== */
 .upload-trigger {
   position: fixed;
