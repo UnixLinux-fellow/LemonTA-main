@@ -650,6 +650,13 @@ function calcTotalCost(design, config) {
   var lighting = config.lighting || '无';
 
   var modules = design.modules || [];
+  // autoFilled 模块（trailing gap-fill）实际 width 小于 100，但按 100 系列标准件计价
+  var modulesForCost = modules.map(function(m) {
+    if (m && m.autoFilled) {
+      return Object.assign({}, m, { width: 100 });
+    }
+    return m;
+  });
   var cornerType = design.cornerType || 'WZJ';
   var wallHeight = design.wallHeight || 260;
   var gapH = wallHeight - 230 - 2;
@@ -693,8 +700,8 @@ function calcTotalCost(design, config) {
   }
 
   // === 标准/非标模块 ===
-  for (var i = 0; i < modules.length; i++) {
-    var mod = modules[i];
+  for (var i = 0; i < modulesForCost.length; i++) {
+    var mod = modulesForCost[i];
     // 补充高度默认值
     if (!mod.height) mod.height = 230;
 
