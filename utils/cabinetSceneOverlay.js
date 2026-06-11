@@ -46,7 +46,8 @@ function createOverlay(canvas) {
     renderer = new THREE.WebGLRenderer({
       canvas: canvas,
       antialias: true,
-      alpha: true
+      alpha: true,
+      preserveDrawingBuffer: true
     });
     renderer.setPixelRatio(ratio);
     renderer.setSize(w, h, false);
