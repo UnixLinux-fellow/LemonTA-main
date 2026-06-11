@@ -85,4 +85,25 @@ describe('homographyToCamera', function() {
       expect(Math.abs(rp.y - pxCorners[i].y)).toBeLessThan(2);
     }
   });
+
+  it('with 180°-rotated pxCorners, recovers a +Y up camera (three.js-compatible)', function() {
+    // homographyToCamera's projection model is 180°-rotated relative to three.js's
+    // standard projection. Callers must pre-rotate user's drag corners 180° around
+    // canvas center before calling. Then the recovered camera renders correctly in three.js.
+    var W = 300, Hh = 260;
+    var canvasW = 360, canvasH = 300;
+    var pxPhysical = [{x:60,y:40},{x:300,y:40},{x:300,y:260},{x:60,y:260}];
+    var pxRotated = pxPhysical.map(function(c) {
+      return {x: canvasW - c.x, y: canvasH - c.y};
+    });
+    var out = h2c.homographyToCamera({
+      cmCorners: [{x:0,y:Hh},{x:W,y:Hh},{x:W,y:0},{x:0,y:0}],
+      pxCorners: pxRotated,
+      canvasWidth: canvasW,
+      canvasHeight: canvasH,
+      fovDegrees: 60
+    });
+    expect(out).not.toBeNull();
+    expect(out.up[1]).toBeGreaterThan(0.5);
+  });
 });

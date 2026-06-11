@@ -30,14 +30,22 @@
 
     <view class="bottom-bar">
       <view class="bar-row dims-row">
-        <text class="dims-label">名称</text>
+        <text class="dims-label">空间名称</text>
         <input class="name-input" type="text" value="{{spaceName}}" bindinput="onSpaceNameInput" placeholder="空间名称" maxlength="20" />
-        <text class="dims-label">墙面</text>
+        <text class="dims-unit"></text>
+      </view>
+      <view class="bar-row dims-row">
+        <text class="dims-label">墙面宽度</text>
         <input class="dims-input" type="number" value="{{wallWidth}}" bindinput="onWallWidthInput" />
-        <text class="dims-label">×</text>
+        <text class="dims-unit">cm</text>
+      </view>
+      <view class="bar-row dims-row">
+        <text class="dims-label">墙面高度</text>
         <input class="dims-input" type="number" value="{{wallHeight}}" bindinput="onWallHeightInput" />
-        <text class="dims-label">cm</text>
-        <view class="btn btn-small btn-primary" bindtap="onConfirmSpace">
+        <text class="dims-unit">cm</text>
+      </view>
+      <view class="bar-row">
+        <view class="btn btn-confirm btn-primary" bindtap="onConfirmSpace">
           <text>确认</text>
         </view>
       </view>
@@ -120,7 +128,7 @@
           <text>上一积木</text>
         </view>
         <view class="btn btn-nav btn-nav-primary" bindtap="nextBlock">
-          <text>{{isWallFull ? '确认布局' : '下一积木'}}</text>
+          <text>{{isWallFull ? '保存方案' : '下一积木'}}</text>
         </view>
       </view>
     </view>

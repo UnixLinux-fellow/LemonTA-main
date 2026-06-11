@@ -40,7 +40,19 @@ function computeContainRect(imgW, imgH, canvasW, canvasH) {
   return { x: x, y: y, w: w, h: h };
 }
 
+function computeInsetContainRect(imgW, imgH, canvasW, canvasH, margin) {
+  var m = margin > 0 ? margin : 0;
+  var innerW = canvasW - 2 * m;
+  var innerH = canvasH - 2 * m;
+  if (innerW <= 0 || innerH <= 0) {
+    return { x: canvasW / 2, y: canvasH / 2, w: 0, h: 0 };
+  }
+  var inner = computeContainRect(imgW, imgH, innerW, innerH);
+  return { x: inner.x + m, y: inner.y + m, w: inner.w, h: inner.h };
+}
+
 module.exports = {
   computePhotoAreaHeight: computePhotoAreaHeight,
-  computeContainRect: computeContainRect
+  computeContainRect: computeContainRect,
+  computeInsetContainRect: computeInsetContainRect
 };

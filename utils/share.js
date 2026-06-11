@@ -118,10 +118,6 @@ var SHARE_MAP = {
     title: '柠檬塔搬家核对清单｜从准备到入住零遗漏',
     path: '/pages/knowledge/move/move'
   },
-  pd3d: {
-    title: '柠檬塔｜3D 空间布置预览',
-    path: '/pages/knowledge/pd3d/pd3d'
-  },
 
   // 个人中心子页：转发统一回首页（这些页面对外没传播价值）
   feedback:  { title: DEFAULT_TITLE, path: '/pages/home/home' },

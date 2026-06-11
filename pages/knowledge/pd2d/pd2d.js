@@ -170,8 +170,8 @@ Page({
     }
     var w = parseInt(this.data.wallWidth, 10);
     var h = parseInt(this.data.wallHeight, 10);
-    if (isNaN(w) || w < 44 || w > 1000) {
-      wx.showToast({ title: '墙宽需在44-1000cm', icon: 'none' });
+    if (isNaN(w) || w < 55 || w > 1000) {
+      wx.showToast({ title: '墙宽需在55-1000cm', icon: 'none' });
       return;
     }
     if (isNaN(h) || h < 232 || h > 400) {
@@ -266,12 +266,30 @@ Page({
 
   onWallWidthInput(e) {
     var v = parseInt(e.detail.value, 10);
-    if (v >= 44 && v <= 1000) this.setData({ wallWidth: v });
+    if (isNaN(v)) {
+      this.setData({ wallWidth: e.detail.value });
+      return;
+    }
+    this.setData({ wallWidth: v });
+    if (v < 55) {
+      wx.showToast({ title: '墙宽最小55cm', icon: 'none' });
+    } else if (v > 1000) {
+      wx.showToast({ title: '墙宽最大1000cm', icon: 'none' });
+    }
   },
 
   onWallHeightInput(e) {
     var v = parseInt(e.detail.value, 10);
-    if (v >= 232 && v <= 400) this.setData({ wallHeight: v });
+    if (isNaN(v)) {
+      this.setData({ wallHeight: e.detail.value });
+      return;
+    }
+    this.setData({ wallHeight: v });
+    if (v < 232) {
+      wx.showToast({ title: '墙高最小232cm', icon: 'none' });
+    } else if (v > 400) {
+      wx.showToast({ title: '墙高最大400cm', icon: 'none' });
+    }
   },
 
   // ========== 柜体宽度选择 ==========

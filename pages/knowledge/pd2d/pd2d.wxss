@@ -146,42 +146,60 @@
   display: flex;
   align-items: center;
   gap: 12rpx;
+  margin-bottom: 10rpx;
+}
+
+.bar-row:last-child {
+  margin-bottom: 0;
 }
 
 .dims-row {
-  gap: 8rpx;
+  gap: 12rpx;
 }
 
 .dims-label {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.55);
   flex-shrink: 0;
+  width: 130rpx;
+}
+
+.dims-unit {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.55);
+  flex-shrink: 0;
+  width: 48rpx;
+  text-align: left;
 }
 
 .dims-input {
-  width: 100rpx;
-  height: 60rpx;
+  flex: 1;
+  height: 64rpx;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 10rpx;
-  padding: 0 12rpx;
-  font-size: 26rpx;
+  padding: 0 16rpx;
+  font-size: 28rpx;
   color: #FC9700;
   text-align: center;
   box-sizing: border-box;
-  flex-shrink: 0;
 }
 
 .name-input {
-  width: 160rpx;
-  height: 60rpx;
+  flex: 1;
+  height: 64rpx;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 10rpx;
-  padding: 0 12rpx;
-  font-size: 26rpx;
+  padding: 0 16rpx;
+  font-size: 28rpx;
   color: #FC9700;
   text-align: center;
   box-sizing: border-box;
-  flex-shrink: 0;
+}
+
+.btn-confirm {
+  flex: 1;
+  padding: 18rpx 0;
+  font-size: 28rpx;
 }
 
 /* ===== 芯片 ===== */

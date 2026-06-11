@@ -74,8 +74,7 @@ App({
           { id: 14, title: '搬家核对清单', subtitle: '从准备到入住 · 逐项核对零遗漏', type: 'move' },
           { id: 15, title: '新家物品清单', subtitle: '106项物品核对 · 采购与签收跟踪', type: 'checklist' },
           { id: 16, title: 'GLB 模型预览', subtitle: '快速渲染三维模型 · 支持 glb/gltf', type: 'glbviewer' },
-          { id: 17, title: 'PD2D 透视投影', subtitle: '照片透视标记 · 2D投影变换', type: 'pd2d' },
-          { id: 18, title: '空间布置 (PD3D)', subtitle: '3D 房间柜子摆放（实验）', type: 'pd3d' }
+          { id: 17, title: 'PD2D 透视投影', subtitle: '照片透视标记 · 2D投影变换', type: 'pd2d' }
         ]
       }
     ]

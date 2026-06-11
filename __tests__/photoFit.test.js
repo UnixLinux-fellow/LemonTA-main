@@ -63,3 +63,36 @@ describe('computeContainRect', function() {
     expect(Number.isFinite(r.w) && r.w > 0).toBe(true);
   });
 });
+
+describe('computeInsetContainRect', function() {
+  it('returns same as computeContainRect when margin=0', function() {
+    var r1 = pf.computeContainRect(250, 260, 375, 280);
+    var r2 = pf.computeInsetContainRect(250, 260, 375, 280, 0);
+    expect(r2).toEqual(r1);
+  });
+
+  it('inscribes rect with at least margin px from every canvas edge', function() {
+    var m = 24;
+    var r = pf.computeInsetContainRect(250, 260, 375, 280, m);
+    expect(r.x).toBeGreaterThanOrEqual(m);
+    expect(r.y).toBeGreaterThanOrEqual(m);
+    expect(r.x + r.w).toBeLessThanOrEqual(375 - m);
+    expect(r.y + r.h).toBeLessThanOrEqual(280 - m);
+  });
+
+  it('preserves wall aspect ratio (width-driven case)', function() {
+    var r = pf.computeInsetContainRect(400, 232, 375, 280, 24);
+    expect(r.w / r.h).toBeCloseTo(400 / 232, 2);
+  });
+
+  it('preserves wall aspect ratio (height-driven case)', function() {
+    var r = pf.computeInsetContainRect(250, 260, 375, 280, 24);
+    expect(r.w / r.h).toBeCloseTo(250 / 260, 2);
+  });
+
+  it('handles margin so large the inner area collapses (returns zero rect)', function() {
+    var r = pf.computeInsetContainRect(250, 260, 100, 100, 60);
+    expect(r.w).toBe(0);
+    expect(r.h).toBe(0);
+  });
+});

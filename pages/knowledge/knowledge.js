@@ -87,18 +87,10 @@ Page({
       return;
     }
 
-    // PD2D 透视投影跳转专用页面
+    // PD2D 透视投影：先进列表页（开始新设计 / 打开已保存方案）
     if (type === 'pd2d') {
       wx.navigateTo({
-        url: '/pages/knowledge/pd2d/pd2d'
-      });
-      return;
-    }
-
-    // PD3D 空间布置跳转专用页面
-    if (type === 'pd3d') {
-      wx.navigateTo({
-        url: '/pages/knowledge/pd3d/pd3d'
+        url: '/pages/knowledge/pd2dList/pd2dList'
       });
       return;
     }

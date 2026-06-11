@@ -16,7 +16,7 @@
     "pages/knowledge/checklist/checklist",
     "pages/knowledge/glbviewer/glbviewer",
     "pages/knowledge/pd2d/pd2d",
-    "pages/knowledge/pd3d/pd3d"
+    "pages/knowledge/pd2dList/pd2dList"
   ],
   "subpackages": [
     {

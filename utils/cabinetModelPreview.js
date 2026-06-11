@@ -196,7 +196,6 @@ function createPreview(canvas) {
   }
 
   function setModels(modelIds, onReady) {
-    console.log('[preview] setModels in:', modelIds, 'cellCount=', cellCount, 'canvasSize=', canvasWidth, 'x', canvasHeight);
     if (!scene || !renderer) {
       if (onReady) onReady(new Error('preview not initialized'));
       return;
@@ -218,10 +217,6 @@ function createPreview(canvas) {
     _loadModelsInternal(modelIds, myGen, function(err, ms) {
       if (myGen !== loadGeneration) return;
       _recomputeBatchRadius();
-      console.log('[preview] setModels loaded:', modelIds, 'batchRadius=', batchRadius,
-        'sizes=', (ms || []).map(function(m) {
-          return m && m.userData ? m.userData.modelId + ':' + JSON.stringify(m.userData.size) : 'null';
-        }));
       renderAll();
       if (onReady) onReady(err, ms);
     });
@@ -305,15 +300,12 @@ function createPreview(canvas) {
 
   function renderAll() {
     if (!renderer || !scene) return;
-    var dbg = [];
     for (var i = 0; i < cellCount; i++) {
       var group = models[i];
       if (group) group.visible = true;
       _renderCell(i, i === selectedIndex);
-      dbg.push(i + ':' + (group ? (group.userData.modelId + (group.visible ? '✓' : '✗')) : 'null'));
       if (group) group.visible = false;
     }
-    console.log('[preview] renderAll cells:', dbg.join(' '), 'batchRadius=', batchRadius);
   }
 
   function selectModel(index) {

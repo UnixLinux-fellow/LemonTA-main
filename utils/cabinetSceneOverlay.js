@@ -13,6 +13,7 @@ var catalog = require('./cabinetCatalog.js');
 
 var DEFAULT_DEPTH = 60;
 var TRIM_COLOR = 0xF5F1E8;
+var FIXED_CAM_DISTANCE = 1500;
 
 function createOverlay(canvas) {
   var THREE = null;
@@ -159,7 +160,7 @@ function createOverlay(canvas) {
     if (!data) { console.warn('[overlay] GLB read failed:', path); cb(new Error('read failed')); return; }
     _parseGLB(data).then(function(gltfScene) {
       var template = _buildTemplate(gltfScene, modelId, meta.width, 230, DEFAULT_DEPTH);
-      templates[modelId] = { templateGroup: template };
+      templates[modelId] = { templateGroup: template, baseWidth: meta.width };
       cb(null, templates[modelId]);
     }).catch(function(err) {
       console.warn('[overlay] GLB parse failed:', path, err);
@@ -178,6 +179,10 @@ function createOverlay(canvas) {
     if (!template) return;
     var clone = template.templateGroup.clone(true);
     clone.position.set(desc.x, desc.y, desc.z);
+    var baseW = template.baseWidth || desc.w;
+    if (desc.w && desc.w !== baseW) {
+      clone.scale.x *= (desc.w / baseW);
+    }
     var doors = _collectDoors(clone);
     for (var i = 0; i < doors.length; i++) doors[i].visible = doorVisible;
     clone.traverse(function(n) {
@@ -288,7 +293,11 @@ function createOverlay(canvas) {
         if (nd.type === 'cabinet') _addCabinetNode(nd);
         else _addTrimNode(nd);
       }
-      lastNodesKey = nodesKey;
+      // Cabinets whose templates are still loading were silently skipped by
+      // _addCabinetNode. Don't cache nodesKey in that case — the recursive
+      // update() fired by the async load callback would otherwise short-circuit
+      // and the missing cabinet would never reach the scene.
+      lastNodesKey = (missingIds.length === 0) ? nodesKey : null;
     }
 
     // Recompute camera when corners or wall size changed.
@@ -297,9 +306,37 @@ function createOverlay(canvas) {
       var cm = [
         {x:0,  y:Hh}, {x:W, y:Hh}, {x:W, y:0}, {x:0, y:0}
       ];
+      // Choose FOV so the recovered camera sits ≈ FIXED_CAM_DISTANCE from the wall
+      // regardless of wallWidth. With a closer camera, the 60cm-deep cabinet front
+      // foreshortens dramatically (its top falls outside the wall outline). Using
+      // a narrow FOV pushes the camera far back, so cabinets project nearly
+      // orthographically and stay fully inside the photo area. The homography
+      // solver still glues wall corners to the user-dragged pxCorners exactly.
+      var topEdgePx = Math.sqrt(
+        (corners[1].x - corners[0].x) * (corners[1].x - corners[0].x) +
+        (corners[1].y - corners[0].y) * (corners[1].y - corners[0].y)
+      );
+      var botEdgePx = Math.sqrt(
+        (corners[2].x - corners[3].x) * (corners[2].x - corners[3].x) +
+        (corners[2].y - corners[3].y) * (corners[2].y - corners[3].y)
+      );
+      var avgEdgePx = 0.5 * (topEdgePx + botEdgePx);
+      if (!(avgEdgePx > 1)) avgEdgePx = canvasWidth * 0.5;
+      var fovRad = 2 * Math.atan((canvasHeight * W) / (2 * avgEdgePx * FIXED_CAM_DISTANCE));
+      var dynFovDeg = fovRad * 180 / Math.PI;
+      if (!(dynFovDeg > 0) || !isFinite(dynFovDeg)) dynFovDeg = 30;
+      if (dynFovDeg < 5) dynFovDeg = 5;
+      if (dynFovDeg > 70) dynFovDeg = 70;
+      // homographyToCamera's projection model is 180° rotated relative to three.js.
+      // Pre-rotate the user's pxCorners around canvas center so the recovered
+      // camera renders with +Y up in three.js. Without this, the wall renders
+      // upside-down and mirrored.
+      var rotatedPx = corners.map(function(c) {
+        return { x: canvasWidth - c.x, y: canvasHeight - c.y };
+      });
       var camParams = h2c.homographyToCamera({
-        cmCorners: cm, pxCorners: corners,
-        canvasWidth: canvasWidth, canvasHeight: canvasHeight, fovDegrees: 60
+        cmCorners: cm, pxCorners: rotatedPx,
+        canvasWidth: canvasWidth, canvasHeight: canvasHeight, fovDegrees: dynFovDeg
       });
       if (!camParams) {
         console.warn('[overlay] camera recovery failed; skipping render');

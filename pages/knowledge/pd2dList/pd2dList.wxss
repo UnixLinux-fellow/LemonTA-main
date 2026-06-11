@@ -1,0 +1,213 @@
+/* pages/knowledge/pd2dList/pd2dList.wxss
+ * 镜像 pages/design/design.wxss 的视觉样式，外加自定义返回按钮 + 双行卡片
+ */
+.container {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+}
+.bg-image {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 0;
+}
+
+/* ===== 自定义导航栏 ===== */
+.custom-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 16rpx;
+}
+.nav-back {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.nav-back:active { background: rgba(0,0,0,0.08); }
+.nav-back-icon { color: #1d1d1f; font-size: 52rpx; line-height: 1; }
+.nav-title {
+  color: #1d1d1f;
+  font-size: 32rpx;
+  font-weight: 700;
+  margin-left: 8rpx;
+  flex: 1;
+}
+
+/* ===== 内容 ===== */
+.design-content {
+  position: relative;
+  z-index: 1;
+  padding: 20rpx 32rpx 220rpx;
+  box-sizing: border-box;
+  width: 100%;
+}
+.design-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 48rpx;
+  padding: 0 8rpx;
+}
+.header-title {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #1d1d1f;
+  line-height: 1.25;
+  letter-spacing: -0.8rpx;
+}
+.header-subtitle {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #86868b;
+  margin-top: 12rpx;
+  letter-spacing: 0.2rpx;
+}
+
+/* ===== CTA ===== */
+.cta-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 48rpx;
+}
+.btn-new-design {
+  background: #FC9700;
+  border: none;
+  border-radius: 50rpx;
+  padding: 26rpx 40rpx;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  box-shadow: 0 6rpx 18rpx rgba(252, 151, 0, 0.28);
+  box-sizing: border-box;
+}
+.btn-new-design::after { border: none; }
+.btn-new-design:active { transform: scale(0.98); opacity: 0.92; }
+.btn-plus { font-size: 36rpx; color: #fff; font-weight: 300; line-height: 1; }
+.btn-new-design-text { font-size: 32rpx; font-weight: 600; color: #fff; letter-spacing: 1rpx; }
+
+/* ===== 列表 ===== */
+.saved-section { padding: 0 4rpx; width: 100%; box-sizing: border-box; }
+.saved-heading {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1d1d1f;
+  letter-spacing: -0.3rpx;
+  margin-bottom: 20rpx;
+}
+.saved-list { display: flex; flex-direction: column; gap: 12rpx; }
+.design-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  background: rgba(255,255,255,0.85);
+  border: 1rpx solid rgba(60,60,67,0.06);
+  border-radius: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.03);
+  box-sizing: border-box;
+  width: 100%;
+}
+.design-item:active { background: rgba(255,255,255,0.95); }
+.design-item-info { flex: 1; min-width: 0; padding-right: 20rpx; }
+.design-name {
+  font-size: 30rpx;
+  color: #1d1d1f;
+  font-weight: 500;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.design-desc {
+  font-size: 22rpx;
+  color: #86868b;
+  display: block;
+  margin-top: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.design-delete {
+  width: 44rpx; height: 44rpx;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(120,120,128,0.12);
+  flex-shrink: 0;
+}
+.design-delete-icon { color: #6e6e73; font-size: 22rpx; line-height: 1; }
+.design-delete:active { background: rgba(255,59,48,0.15); }
+
+/* ===== 空状态 ===== */
+.no-design {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 40rpx;
+  background: rgba(255,255,255,0.75);
+  border-radius: 24rpx;
+  border: 1rpx solid rgba(60,60,67,0.06);
+  box-sizing: border-box;
+  width: 100%;
+}
+.no-design-text { font-size: 30rpx; color: #1d1d1f; font-weight: 500; margin-bottom: 8rpx; }
+.no-design-hint { font-size: 24rpx; color: #86868b; }
+
+/* ===== 删除确认弹窗 ===== */
+.modal-mask {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  width: 560rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 44rpx 36rpx 28rpx;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 12rpx 36rpx rgba(0,0,0,0.12);
+}
+.modal-title { font-size: 32rpx; font-weight: 600; color: #1d1d1f; margin-bottom: 12rpx; }
+.modal-desc { font-size: 26rpx; color: #6e6e73; margin-bottom: 32rpx; line-height: 1.5; }
+.modal-btns { display: flex; gap: 16rpx; }
+.modal-btn-cancel {
+  flex: 1;
+  padding: 22rpx 0;
+  text-align: center;
+  border-radius: 40rpx;
+  border: 1rpx solid rgba(60,60,67,0.18);
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #6e6e73;
+}
+.modal-btn-confirm {
+  flex: 1;
+  padding: 22rpx 0;
+  text-align: center;
+  border-radius: 40rpx;
+  background: #FF3B30;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.modal-btn-cancel:active, .modal-btn-confirm:active { opacity: 0.85; }
