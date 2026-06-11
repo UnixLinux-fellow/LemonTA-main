@@ -23,7 +23,7 @@ describe('buildSceneNodes', function() {
 
   it('one cabinet: cabinet at (wallX, 0, 0) with width × 230 × depth', function() {
     var out = nodes.buildSceneNodes({
-      wallWidth: 300, wallHeight: 260,
+      wallWidth: 300, wallHeight: 246,
       modules: [{ type: 'a', width: 100, wallX: 50 }],
       depth: DEPTH
     });
@@ -40,7 +40,7 @@ describe('buildSceneNodes', function() {
 
   it('one cabinet with gap>0: emits a g-* filler at (wallX, 230, 0) sized (width, gap, depth)', function() {
     var out = nodes.buildSceneNodes({
-      wallWidth: 300, wallHeight: 280,
+      wallWidth: 300, wallHeight: 246,
       modules: [{ type: 'b', width: 50, wallX: 100 }],
       depth: DEPTH
     });
@@ -49,7 +49,7 @@ describe('buildSceneNodes', function() {
     });
     expect(fillers.length).toBe(1);
     expect(fillers[0].w).toBe(50);
-    expect(fillers[0].h).toBe(48);
+    expect(fillers[0].h).toBe(14);
     expect(fillers[0].d).toBe(DEPTH);
   });
 
@@ -179,5 +179,56 @@ describe('buildSceneNodes', function() {
       return n.type === 'trim' && n.x === 234 && n.y === 230 && n.w === 4 && n.h === 28;
     });
     expect(closingUpper.length).toBe(1);
+  });
+});
+
+describe('buildSceneNodes - high wall (≥247)', function() {
+  var DEPTH = 60;
+
+  it('high wall: cabinet at y=0 + G1 cabinet at y=230 + 4cm trim at y=wallHeight-4', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 300, wallHeight: 280,
+      modules: [{ type: 'a', width: 100, wallX: 50 }],
+      depth: DEPTH
+    });
+    var cab = out.filter(function(n) { return n.type === 'cabinet'; });
+    expect(cab.length).toBe(2);
+    var main = cab.filter(function(n) { return n.modelId === '100A'; })[0];
+    var g1   = cab.filter(function(n) { return n.modelId === '100G1'; })[0];
+    expect(main.y).toBe(0);
+    expect(main.h).toBe(230);
+    expect(g1).toBeDefined();
+    expect(g1.y).toBe(230);
+    expect(g1.h).toBe(280 - 230 - 4);
+    expect(g1.x).toBe(50);
+    expect(g1.w).toBe(100);
+    var topClose = out.filter(function(n) {
+      return n.type === 'trim' && n.x === 50 && n.y === 280 - 4 && n.h === 4 && n.w === 100;
+    });
+    expect(topClose.length).toBe(1);
+  });
+
+  it('high wall, 50cm cabinet: G1 modelId is 50G1', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 300, wallHeight: 260,
+      modules: [{ type: 'b', width: 50, wallX: 100 }],
+      depth: DEPTH
+    });
+    var g1 = out.filter(function(n) { return n.type==='cabinet' && n.modelId==='50G1'; });
+    expect(g1.length).toBe(1);
+    expect(g1[0].h).toBe(260 - 230 - 4);
+  });
+
+  it('low wall (<247) keeps existing g-* trim filler above cabinet', function() {
+    var out = nodes.buildSceneNodes({
+      wallWidth: 300, wallHeight: 246,
+      modules: [{ type: 'a', width: 100, wallX: 50 }],
+      depth: DEPTH
+    });
+    var fillers = out.filter(function(n) {
+      return n.type === 'trim' && n.y === 230 && n.x === 50 && n.w === 100;
+    });
+    expect(fillers.length).toBe(1);
+    expect(fillers[0].h).toBe(246 - 230 - 2);
   });
 });
