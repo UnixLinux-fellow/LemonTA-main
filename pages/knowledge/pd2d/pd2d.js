@@ -113,19 +113,7 @@ Page({
           canvasHeight: canvasHeight
         });
 
-        if (self.data.spaceConfirmed && !self._photoImg) {
-          var m = 24;
-          self.setData({
-            corners: [
-              { x: m, y: m },
-              { x: canvasWidth - m, y: m },
-              { x: canvasWidth - m, y: canvasHeight - m },
-              { x: m, y: canvasHeight - m }
-            ]
-          });
-        } else {
-          self._initDefaultCorners();
-        }
+        self._initDefaultCorners();
         self._drawFrame();
       });
   },
@@ -144,6 +132,20 @@ Page({
   _initDefaultCorners() {
     var cw = this.data.canvasWidth;
     var ch = this.data.canvasHeight;
+    if (this.data.spaceConfirmed && !this._photoImg) {
+      var rect = photoFit.computeInsetContainRect(
+        this.data.wallWidth, this.data.wallHeight, cw, ch, 24
+      );
+      this.setData({
+        corners: [
+          { x: rect.x,          y: rect.y },
+          { x: rect.x + rect.w, y: rect.y },
+          { x: rect.x + rect.w, y: rect.y + rect.h },
+          { x: rect.x,          y: rect.y + rect.h }
+        ]
+      });
+      return;
+    }
     this.setData({
       corners: [
         { x: cw * 0.2, y: ch * 0.2 },
@@ -176,6 +178,15 @@ Page({
       wx.showToast({ title: '墙高需在232-400cm', icon: 'none' });
       return;
     }
+    var storage = require('../../../utils/pd2dStorage.js');
+    try {
+      if (!storage.isNameUnique(name)) {
+        wx.showToast({ title: '该空间名称已存在', icon: 'none' });
+        return;
+      }
+    } catch (e) {
+      // 存储读取异常时不阻断流程，让用户继续；保存阶段会再次失败给提示
+    }
     var areaH = this._photoImg
       ? this.data.photoAreaHeight
       : photoFit.computePhotoAreaHeight(
@@ -188,7 +199,6 @@ Page({
       isWallFull: false, doorVisible: false,
       photoAreaHeight: areaH
     });
-    // wx:if 切换会重建 canvas，延迟重新初始化
     var self = this;
     self._canvas = null;
     self._ctx = null;
@@ -224,6 +234,7 @@ Page({
   _loadPhoto(tempPath) {
     var self = this;
     if (!self._canvas) return;
+    self._photoTempPath = tempPath;
     var img = self._canvas.createImage();
     img.onload = function() {
       self._photoImg = img;
@@ -268,6 +279,7 @@ Page({
   selectWidth(e) {
     var w = parseInt(e.currentTarget.dataset.width, 10);
     this.setData({ selectedWidth: w });
+    this._recomputeIsWallFull();
     this._initModelPreview();
   },
 
@@ -346,12 +358,47 @@ Page({
       usedWidth += modules[i].width;
     }
     var remaining = this.data.wallWidth - usedWidth;
-    this.setData({ isWallFull: remaining < this.data.selectedWidth + 4 });
+    this.setData({ isWallFull: remaining < this.data.selectedWidth });
   },
 
   _confirmLayout() {
-    // TODO: 确认布局，跳转到报价页或保存方案
-    wx.showToast({ title: '布局已确认', icon: 'success' });
+    var self = this;
+    if (!self.data.modules || self.data.modules.length === 0) {
+      wx.showToast({ title: '请先放置柜体', icon: 'none' });
+      return;
+    }
+    wx.showModal({
+      title: '保存方案',
+      editable: true,
+      placeholderText: '方案名（可选）',
+      content: self.data.spaceName || '',
+      success: function(modal) {
+        if (!modal.confirm) return;
+        var name = (modal.content || '').trim() || self.data.spaceName || '未命名方案';
+        wx.showLoading({ title: '保存中...', mask: true });
+        var storage = require('../../../utils/pd2dStorage.js');
+        var photoPath = self._photoTempPath || '';
+        storage.saveLayout({
+          name: name,
+          photoPath: photoPath,
+          spaceName: self.data.spaceName,
+          wall: { width: self.data.wallWidth, height: self.data.wallHeight },
+          corners: self.data.corners,
+          selectedWidth: self.data.selectedWidth,
+          selectedType: self.data.selectedType,
+          selectedModelId: self.data.selectedModelId,
+          doorVisible: self.data.doorVisible,
+          modules: self.data.modules
+        }).then(function() {
+          wx.hideLoading();
+          wx.showToast({ title: '已保存', icon: 'success' });
+        }).catch(function(err) {
+          wx.hideLoading();
+          console.error('[pd2d] save layout failed', err);
+          wx.showToast({ title: '保存失败', icon: 'none' });
+        });
+      }
+    });
   },
 
   // ========== 模型预览 (3D GLB thumbnails) ==========
@@ -371,7 +418,6 @@ Page({
     var self = this;
     var widthCm = self.data.selectedWidth;
     var modelIds = self._getModelIdsForWidth(widthCm);
-    console.log('[pd2d] _initModelPreview widthCm=', widthCm, 'modelIds=', modelIds, 'hasPreview=', !!self._modelPreview);
     if (modelIds.length === 0) return;
 
     var CELL_PX = 130;
@@ -432,6 +478,7 @@ Page({
           selectedType: models[j].type.toLowerCase(),
           selectedWidth: models[j].width
         });
+        this._recomputeIsWallFull();
         return;
       }
     }
