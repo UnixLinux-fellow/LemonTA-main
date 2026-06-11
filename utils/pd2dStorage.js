@@ -48,7 +48,12 @@ function persistPhoto(tempPath) {
 }
 
 function saveLayout(layout) {
-  return persistPhoto(layout.photoPath).then(function(savedPath) {
+  return Promise.all([
+    persistPhoto(layout.photoPath),
+    persistPhoto(layout.compositePath)
+  ]).then(function(paths) {
+    var savedPhoto = paths[0];
+    var savedComposite = paths[1];
     var all = readAll();
     var now = Date.now();
     var id = layout.id || genId();
@@ -57,7 +62,8 @@ function saveLayout(layout) {
       name: layout.name || '未命名方案',
       createdAt: layout.createdAt || now,
       updatedAt: now,
-      photoPath: savedPath,
+      photoPath: savedPhoto,
+      compositePath: savedComposite,
       wall: { width: layout.wall.width, height: layout.wall.height },
       spaceName: layout.spaceName || '',
       corners: (layout.corners || []).map(function(c){ return { x: c.x, y: c.y }; }),
@@ -83,7 +89,7 @@ function saveLayout(layout) {
       all.push(record);
     }
     writeAll(all);
-    return { id: record.id, photoPath: record.photoPath };
+    return { id: record.id, photoPath: record.photoPath, compositePath: record.compositePath };
   });
 }
 

@@ -41,3 +41,30 @@ describe('pd2dStorage.isNameUnique', function() {
     });
   });
 });
+
+describe('pd2dStorage.saveLayout compositePath', function() {
+  it('persists compositePath via wx.saveFile when provided', function(done) {
+    storage.saveLayout({
+      name: '客厅', photoPath: '',
+      compositePath: 'wxfile://temp_composite_xyz',
+      wall: { width: 300, height: 260 }, modules: []
+    }).then(function(saved) {
+      expect(saved.compositePath).toMatch(/^wxfile:\/\/saved_/);
+      var loaded = storage.loadLayout(saved.id);
+      expect(loaded.compositePath).toBe(saved.compositePath);
+      done();
+    });
+  });
+
+  it('defaults compositePath to empty string when not provided', function(done) {
+    storage.saveLayout({
+      name: '卧室', photoPath: '',
+      wall: { width: 300, height: 260 }, modules: []
+    }).then(function(saved) {
+      expect(saved.compositePath).toBe('');
+      var loaded = storage.loadLayout(saved.id);
+      expect(loaded.compositePath).toBe('');
+      done();
+    });
+  });
+});
